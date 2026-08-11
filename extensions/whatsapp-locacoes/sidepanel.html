@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vânia Festas Pro</title><link rel="stylesheet" href="sidepanel.css"></head>
+  <body>
+    <header><strong>Vânia Festas Pro</strong><span>Pré-reserva</span></header>
+    <main>
+      <section id="login-card" class="auth-card">
+        <h1>Conectar ao sistema</h1>
+        <p>Entre com o e-mail e a senha de administrador. A senha não fica salva na extensão.</p>
+        <label>Endereço do sistema<input id="api-base" type="url" value="http://localhost:3000" required></label>
+        <label>Endereço público do catálogo<input id="catalog-base" type="url" placeholder="Ex.: https://vaniafestas.com.br"></label>
+        <p>Use o endereço que seus clientes acessam. Ele será usado nos links enviados pelo WhatsApp.</p>
+        <label>E-mail<input id="email" type="email" autocomplete="username" required></label>
+        <label>Senha<input id="password" type="password" autocomplete="current-password" required></label>
+        <p id="login-error" class="error" hidden></p>
+        <button id="login" type="button">Entrar</button>
+      </section>
+      <section id="app" hidden>
+        <div class="session"><span id="session-email"></span><button id="logout" class="text-button">Sair</button></div>
+        <label>Data do evento<input id="event-date" type="date"></label>
+        <label>Buscar no catálogo<input id="search" type="search" placeholder="Ex.: stitch azul" disabled></label>
+        <p id="hint">Escolha uma data para consultar a disponibilidade real.</p>
+        <p id="catalog-error" class="error" hidden></p>
+        <section id="ai-assistant" class="ai-assistant"><h2>✨ Sugestão inteligente</h2><p>Descreva o pedido do cliente e receba itens disponíveis para a data.</p><textarea id="ai-request" rows="3" placeholder="Ex.: Festa infantil do Stitch para 80 pessoas"></textarea><button id="ask-ai" type="button" disabled>Sugerir produtos</button><p id="ai-error" class="error" hidden></p><div id="ai-suggestions" hidden></div></section>
+        <section id="favorites" hidden><h2>Favoritos</h2><div id="favorite-list"></div></section>
+        <section id="recent" hidden><h2>Últimos adicionados</h2><div id="recent-list"></div></section>
+        <section id="results" hidden><h2>Disponíveis nesta data</h2><div id="product-list"></div></section>
+        <section class="cart"><div><h2>Pré-reserva</h2><span id="count">0 itens</span></div><div id="cart-items"><p>Nenhum produto selecionado.</p></div><button id="use-conversation" class="secondary-button" type="button">Usar dados da conversa</button><label>Nome do cliente<input id="customer-name" type="text" placeholder="Ex.: Maria Silva"></label><label>Telefone do cliente<input id="customer-phone" type="tel" placeholder="Ex.: 71 99999-9999"></label><section id="customer-history" class="customer-history" hidden><h3>Histórico do cliente</h3><div id="history-list"></div></section><label>Endereço do evento<input id="customer-address" type="text" placeholder="Rua, número, bairro e cidade"></label><p id="save-error" class="error" hidden></p><strong id="total">R$ 0,00</strong><button id="save" disabled>Salvar pré-reserva</button><button id="copy" disabled>Copiar mensagem para WhatsApp</button></section>
+        <section id="saved-reservation" class="saved-reservation" hidden><strong id="saved-title">Pré-reserva salva</strong><p id="saved-description"></p><button id="confirm-saved" type="button">Confirmar reserva</button></section>
+      </section>
+    </main>
+    <script src="sidepanel.js"></script>
+  </body>
+</html>

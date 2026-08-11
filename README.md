@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vânia Festas Pro
 
-## Getting Started
+Sistema de locação para catálogo público, reservas, agenda, logística, financeiro e atendimento pelo WhatsApp Web.
 
-First, run the development server:
+## Rodar localmente
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+1. Instale as dependências: `npm install`.
+2. Copie `.env.example` para `.env.local` e preencha as credenciais do Supabase.
+3. Execute, no SQL Editor do Supabase, as migrations de `supabase/migrations` em ordem cronológica.
+4. Inicie o projeto com `npm run dev` e abra `http://localhost:3000`.
+
+## Variáveis de ambiente
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+# Opcional. Sem esta chave, as sugestões inteligentes usam a busca local do catálogo.
+OPENAI_API_KEY=
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Nunca publique `.env.local` ou chaves de API no Git.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Painel administrativo
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Após autenticar, o painel reúne:
 
-## Learn More
+- Painel geral e agenda de próximos eventos;
+- Produtos, imagens adicionais, favoritos e busca por termos;
+- Clientes, reservas, pagamentos, logística e financeiro;
+- Pré-reservas geradas pela extensão do WhatsApp.
 
-To learn more about Next.js, take a look at the following resources:
+## Extensão do WhatsApp
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Em desenvolvimento, abra `brave://extensions` (ou `chrome://extensions`), ative o modo desenvolvedor e escolha **Carregar sem compactação**. Selecione a pasta `extensions/whatsapp-locacoes`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Na primeira abertura, informe o endereço local do sistema (`http://localhost:3000`), faça login e informe também o endereço público do catálogo quando quiser compartilhar links com clientes.
 
-## Deploy on Vercel
+## Validação
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run verify
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Publicação
+
+Antes de publicar, configure no provedor de hospedagem as mesmas variáveis de ambiente do Supabase. Atualize o endereço público do catálogo na extensão e, se necessário, adicione o domínio publicado em `host_permissions` no `extensions/whatsapp-locacoes/manifest.json`; depois recarregue a extensão no navegador.
