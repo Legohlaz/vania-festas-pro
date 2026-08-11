@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Vânia Festas Pro",
+  "version": "0.5.1",
+  "description": "Pré-reservas e disponibilidade para atendimento no WhatsApp Web.",
+  "minimum_chrome_version": "114",
+  "permissions": ["sidePanel", "storage", "tabs", "scripting"],
+  "host_permissions": [
+    "https://web.whatsapp.com/*",
+    "http://localhost:3000/*",
+    "https://*.vercel.app/*",
+    "https://kjimzpipvdcxwwpvhfue.supabase.co/*"
+  ],
+  "content_scripts": [{
+    "matches": ["https://web.whatsapp.com/*"],
+    "js": ["content.js"],
+    "run_at": "document_idle"
+  }],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "Abrir Vânia Festas Pro" },
+  "side_panel": { "default_path": "sidepanel.html" }
+}
