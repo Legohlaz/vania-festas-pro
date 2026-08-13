@@ -1,126 +1,19 @@
-import {
-  Baby,
-  Balloon,
-  CakeSlice,
-  GraduationCap,
-  Heart,
-  PartyPopper,
-  Sparkles,
-} from "lucide-react";
+import Link from "next/link";
+import { Baby, Balloon, CakeSlice, GraduationCap, Heart, MessageCircle, PartyPopper, Sparkles } from "lucide-react";
 
 import { Container } from "@/components/common/Container";
 import { CategoryCard } from "@/components/categories/CategoryCard";
 
 const categories = [
-  {
-    title: "Casamentos",
-    description:
-      "Ambientes elegantes para cerimônias, recepções e celebrações especiais.",
-    href: "/catalogo?categoria=casamentos",
-    icon: Heart,
-    featured: true,
-  },
-  {
-    title: "15 Anos",
-    description:
-      "Cenários marcantes para celebrar uma das datas mais especiais.",
-    href: "/catalogo?categoria=15-anos",
-    icon: Sparkles,
-  },
-  {
-    title: "Festa Infantil",
-    description:
-      "Temas e composições para festas infantis de diferentes estilos.",
-    href: "/catalogo?categoria=infantil",
-    icon: Balloon,
-  },
-  {
-    title: "Aniversários Adultos",
-    description:
-      "Do rústico ao sofisticado para comemorações cheias de personalidade.",
-    href: "/catalogo?categoria=adultos",
-    icon: CakeSlice,
-  },
-  {
-    title: "Formaturas",
-    description:
-      "Decoração para celebrar conquistas e transformar a formatura em memória.",
-    href: "/catalogo?categoria=formaturas",
-    icon: GraduationCap,
-  },
-  {
-    title: "Chá de Fraldas",
-    description:
-      "Decorações delicadas para celebrar a chegada de um novo integrante.",
-    href: "/catalogo?categoria=cha-de-fraldas",
-    icon: Baby,
-  },
-  {
-    title: "Chá Revelação",
-    description:
-      "Cenários especiais para transformar a grande descoberta em celebração.",
-    href: "/catalogo?categoria=cha-revelacao",
-    icon: PartyPopper,
-  },
+  { title: "Casamentos", description: "Ambientes elegantes para cerimônias, recepções e celebrações especiais.", href: "/catalogo?categoria=casamentos", icon: Heart, image: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=85", featured: true },
+  { title: "15 Anos", description: "Cenários marcantes para celebrar uma das datas mais especiais.", href: "/catalogo?categoria=15-anos", icon: Sparkles, image: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=1000&q=85" },
+  { title: "Festa Infantil", description: "Temas e composições para festas infantis de diferentes estilos.", href: "/catalogo?categoria=infantil", icon: Balloon, image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=1000&q=85" },
+  { title: "Aniversários Adultos", description: "Do rústico ao sofisticado para comemorações cheias de personalidade.", href: "/catalogo?categoria=adultos", icon: CakeSlice, image: "https://images.unsplash.com/photo-1464349153735-7db50ed83c84?auto=format&fit=crop&w=1000&q=85" },
+  { title: "Formaturas", description: "Decoração para celebrar conquistas e transformar a formatura em memória.", href: "/catalogo?categoria=formaturas", icon: GraduationCap, image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1000&q=85" },
+  { title: "Chá de Fraldas", description: "Decorações delicadas para celebrar a chegada de um novo integrante.", href: "/catalogo?categoria=cha-de-fraldas", icon: Baby, image: "https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=1000&q=85" },
+  { title: "Chá Revelação", description: "Cenários especiais para transformar a grande descoberta em celebração.", href: "/catalogo?categoria=cha-revelacao", icon: PartyPopper, image: "https://images.unsplash.com/photo-1527529482837-4698179dc6ce?auto=format&fit=crop&w=1000&q=85" },
 ];
 
 export function Categories() {
-  return (
-    <section
-      style={{
-        paddingTop: "88px",
-        paddingBottom: "104px",
-      }}
-    >
-      <Container>
-        {/* Cabeçalho */}
-        <div
-          className="flex flex-col lg:flex-row lg:items-end lg:justify-between"
-          style={{ gap: "32px" }}
-        >
-          <div>
-            <span className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
-              Encontre sua inspiração
-            </span>
-
-            <h2
-              className="max-w-2xl text-3xl font-black tracking-tight text-emerald-950 sm:text-4xl lg:text-5xl"
-              style={{ marginTop: "14px" }}
-            >
-              Qual momento você vai celebrar?
-            </h2>
-
-            <p
-              className="max-w-2xl text-base leading-7 text-gray-600 sm:text-lg"
-              style={{ marginTop: "18px" }}
-            >
-              Explore nossos trabalhos por tipo de evento e encontre ideias
-              para criar uma celebração com a sua personalidade.
-            </p>
-          </div>
-
-          <p className="max-w-sm text-sm leading-6 text-gray-500 lg:text-right">
-            Depois você poderá filtrar por tema, estilo, cores e outros
-            detalhes diretamente no catálogo.
-          </p>
-        </div>
-
-        {/* Categorias */}
-        <div
-          className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-          style={{
-            marginTop: "48px",
-            gap: "24px",
-          }}
-        >
-          {categories.map((category) => (
-            <CategoryCard
-              key={category.title}
-              {...category}
-            />
-          ))}
-        </div>
-      </Container>
-    </section>
-  );
+  return <section className="py-20 md:py-24"><Container><div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between"><div><span className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">Encontre sua inspiração</span><h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight text-emerald-950 sm:text-4xl lg:text-5xl">Qual momento você vai celebrar?</h2><p className="mt-4 max-w-2xl text-base leading-7 text-gray-600 sm:text-lg">Explore nossos trabalhos por tipo de evento e encontre ideias para criar uma celebração com a sua personalidade.</p></div><div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-5 py-4 lg:max-w-sm"><p className="text-sm font-bold text-emerald-900">Escolha uma categoria para ver os itens disponíveis.</p><p className="mt-1 text-sm leading-6 text-emerald-800/75">Depois você poderá filtrar por tema, estilo e cores no catálogo.</p></div></div><div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{categories.map((category) => <CategoryCard key={category.title} {...category} />)}</div><div className="mt-10 flex flex-col items-center justify-between gap-5 rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-950 to-emerald-800 px-6 py-7 text-center text-white sm:flex-row sm:px-9 sm:text-left"><div><p className="text-xl font-black">Não encontrou o tema que imaginou?</p><p className="mt-1 text-sm text-emerald-50/80">Fale com a gente e montamos uma proposta personalizada para o seu evento.</p></div><Link href="/contato" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-emerald-900 transition hover:bg-emerald-50"><MessageCircle size={18} />Pedir orçamento</Link></div></Container></section>;
 }
