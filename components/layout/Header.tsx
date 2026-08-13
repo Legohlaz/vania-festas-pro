@@ -41,6 +41,7 @@ const navigation = [
 export function Header() {
   const [selectionCount, setSelectionCount] =
     useState(0);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   function updateSelectionCount() {
     try {
@@ -148,13 +149,40 @@ export function Header() {
               </Link>
             ))}
 
-            <button
-              type="button"
-              className="flex items-center gap-1 text-sm font-medium text-gray-700 transition-colors hover:text-emerald-700"
-            >
-              Mais
-              <ChevronDown size={16} />
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                aria-expanded={moreOpen}
+                aria-haspopup="menu"
+                onClick={() => setMoreOpen((current) => !current)}
+                className="flex items-center gap-1 text-sm font-medium text-gray-700 transition-colors hover:text-emerald-700"
+              >
+                Mais
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform ${moreOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {moreOpen && (
+                <div className="absolute left-1/2 top-full z-50 mt-3 w-52 -translate-x-1/2 overflow-hidden rounded-xl border border-emerald-100 bg-white p-1.5 shadow-xl">
+                  <Link
+                    href="/catalogo?selecao=aberta"
+                    onClick={() => setMoreOpen(false)}
+                    className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-emerald-50 hover:text-emerald-800"
+                  >
+                    Minha seleção
+                  </Link>
+                  <Link
+                    href="/contato"
+                    onClick={() => setMoreOpen(false)}
+                    className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-emerald-50 hover:text-emerald-800"
+                  >
+                    Falar pelo WhatsApp
+                  </Link>
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* Ações */}
