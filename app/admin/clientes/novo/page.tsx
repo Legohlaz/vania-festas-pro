@@ -16,7 +16,7 @@ export default function NovoClientePage() {
     email: "",
     phone: "",
     address: "",
-    active: true,
+    approval_status: "approved" as const,
   });
 
   async function handleSubmit(e: React.FormEvent) {
@@ -66,15 +66,6 @@ export default function NovoClientePage() {
               />
             </div>
           ))}
-
-          <label className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              checked={form.active}
-              onChange={e=>setForm({...form,active:e.target.checked})}
-            />
-            Cliente ativo
-          </label>
 
           <button
             disabled={loading}
