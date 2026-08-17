@@ -296,6 +296,9 @@ export function CatalogContent() {
   const [reservationLoading, setReservationLoading] =
     useState(false);
 
+  const [createdRequestId, setCreatedRequestId] =
+    useState<number | null>(null);
+
   const [
     productAvailability,
     setProductAvailability,
@@ -658,6 +661,7 @@ export function CatalogContent() {
   function addToSelection(
     product: Product
   ) {
+    setCreatedRequestId(null);
     setSelectedProducts(
       (currentProducts) => {
         const alreadySelected =
@@ -705,6 +709,7 @@ export function CatalogContent() {
     productId: string | number,
     amount: number
   ) {
+    setCreatedRequestId(null);
     setSelectedProducts((currentProducts) =>
       currentProducts.map((product) => {
         if (String(product.id) !== String(productId)) {
@@ -747,6 +752,7 @@ export function CatalogContent() {
   function removeFromSelection(
     productId: string | number
   ) {
+    setCreatedRequestId(null);
     setSelectedProducts(
       (currentProducts) =>
         currentProducts.filter(
@@ -771,6 +777,7 @@ export function CatalogContent() {
     }
 
     setSelectedProducts([]);
+    setCreatedRequestId(null);
   }
 
   function isProductSelected(
@@ -889,6 +896,8 @@ export function CatalogContent() {
       if (!Number.isFinite(reservationId)) {
         throw new Error("A reserva foi criada sem um identificador válido.");
       }
+
+      setCreatedRequestId(reservationId);
 
       const formattedDate = formatEventDate(eventDate);
 
@@ -1618,9 +1627,10 @@ export function CatalogContent() {
                             type="date"
                             value={eventDate}
                             min={getToday()}
-                            onChange={(event) =>
-                              setEventDate(event.target.value)
-                            }
+                            onChange={(event) => {
+                              setEventDate(event.target.value);
+                              setCreatedRequestId(null);
+                            }}
                             className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 outline-none transition focus:border-emerald-400"
                           />
                         </div>
@@ -1654,9 +1664,10 @@ export function CatalogContent() {
                           id="selection-customer-name"
                           type="text"
                           value={customerName}
-                          onChange={(event) =>
-                            setCustomerName(event.target.value)
-                          }
+                          onChange={(event) => {
+                            setCustomerName(event.target.value);
+                            setCreatedRequestId(null);
+                          }}
                           autoComplete="name"
                           placeholder="Seu nome"
                           className="mt-2 h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-emerald-400"
@@ -1675,15 +1686,23 @@ export function CatalogContent() {
                           id="selection-customer-phone"
                           type="tel"
                           value={customerPhone}
-                          onChange={(event) =>
-                            setCustomerPhone(event.target.value)
-                          }
+                          onChange={(event) => {
+                            setCustomerPhone(event.target.value);
+                            setCreatedRequestId(null);
+                          }}
                           autoComplete="tel"
                           placeholder="(71) 99999-9999"
                           className="mt-2 h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-emerald-400"
                         />
                       </div>
                     </div>
+
+                    {createdRequestId && (
+                      <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                        <p className="font-bold">Pedido #{createdRequestId} enviado para análise.</p>
+                        <p className="mt-1 leading-5 text-emerald-800">Recebemos sua solicitação e vamos confirmar a disponibilidade e o valor final pelo WhatsApp.</p>
+                      </div>
+                    )}
 
                     <div
                       className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
@@ -1703,14 +1722,15 @@ export function CatalogContent() {
                         onClick={requestSelectionOnWhatsApp}
                         disabled={
                           availabilityLoading ||
-                          Boolean(availabilityError)
+                          Boolean(availabilityError) ||
+                          reservationLoading
                         }
                         className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-emerald-800 px-6 text-sm font-black text-white transition hover:bg-emerald-900 disabled:cursor-not-allowed disabled:bg-gray-300"
                       >
                         <MessageCircle size={18} />
                         {reservationLoading
-                          ? "Registrando solicitação..."
-                          : "Solicitar orçamento pelo WhatsApp"}
+                          ? "Enviando pedido..."
+                          : "Enviar pedido e abrir WhatsApp"}
                       </button>
                     </div>
 
