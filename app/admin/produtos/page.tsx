@@ -50,6 +50,9 @@ export default function ProdutosPage() {
   const [errorMessage, setErrorMessage] =
     useState<string | null>(null);
 
+  const [actionMessage, setActionMessage] =
+    useState<string | null>(null);
+
   const [updatingProductId, setUpdatingProductId] =
     useState<string | null>(null);
 
@@ -160,6 +163,7 @@ export default function ProdutosPage() {
   ) {
     const newStatus = product.active !== true;
 
+    setActionMessage(null);
     setUpdatingProductId(product.id);
 
     const supabase = createClient();
@@ -177,10 +181,10 @@ export default function ProdutosPage() {
         error
       );
 
-      window.alert(
+      setActionMessage(
         `Não foi possível ${
           newStatus ? "ativar" : "desativar"
-        } o produto.`
+        } o produto. Tente novamente.`
       );
 
       setUpdatingProductId(null);
@@ -196,6 +200,12 @@ export default function ProdutosPage() {
             }
           : currentProduct
       )
+    );
+
+    setActionMessage(
+      `${product.name} foi ${
+        newStatus ? "ativado" : "desativado"
+      } com sucesso.`
     );
 
     setUpdatingProductId(null);
@@ -262,6 +272,26 @@ export default function ProdutosPage() {
 
         {/* Conteúdo */}
         <div style={{ marginTop: "40px" }}>
+          {actionMessage && (
+            <div
+              role="status"
+              className={`mb-5 flex items-center justify-between gap-4 rounded-xl border p-4 text-sm font-semibold ${
+                actionMessage.includes("Não foi possível")
+                  ? "border-red-200 bg-red-50 text-red-700"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-800"
+              }`}
+            >
+              <p>{actionMessage}</p>
+              <button
+                type="button"
+                onClick={() => setActionMessage(null)}
+                className="shrink-0 text-xs font-bold underline"
+              >
+                Fechar
+              </button>
+            </div>
+          )}
+
           {/* Carregando */}
           {loading && (
             <div
