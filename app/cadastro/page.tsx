@@ -6,15 +6,7 @@ import { ArrowLeft, CheckCircle2, UserPlus } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 import { translateAuthError } from "@/lib/supabase/error-messages";
-
-function getPasswordChecks(password: string) {
-  return [
-    { label: "Pelo menos 8 caracteres", valid: password.length >= 8 },
-    { label: "Uma letra maiuscula", valid: /[A-Z]/.test(password) },
-    { label: "Uma letra minuscula", valid: /[a-z]/.test(password) },
-    { label: "Um numero", valid: /\d/.test(password) },
-  ];
-}
+import { getPasswordChecks, isStrongPassword } from "@/lib/auth/password";
 
 export default function CadastroPage() {
   const [name, setName] = useState("");
@@ -26,7 +18,7 @@ export default function CadastroPage() {
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const passwordChecks = getPasswordChecks(password);
-  const isPasswordValid = passwordChecks.every((check) => check.valid);
+  const isPasswordValid = isStrongPassword(password);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
