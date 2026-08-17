@@ -7,6 +7,15 @@ import { ArrowLeft, CheckCircle2, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { translateAuthError } from "@/lib/supabase/error-messages";
 
+function getPasswordChecks(password: string) {
+  return [
+    { label: "Pelo menos 8 caracteres", valid: password.length >= 8 },
+    { label: "Uma letra maiuscula", valid: /[A-Z]/.test(password) },
+    { label: "Uma letra minuscula", valid: /[a-z]/.test(password) },
+    { label: "Um numero", valid: /\d/.test(password) },
+  ];
+}
+
 export default function CadastroPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -16,12 +25,20 @@ export default function CadastroPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const passwordChecks = getPasswordChecks(password);
+  const isPasswordValid = passwordChecks.every((check) => check.valid);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setLoading(true);
     setErrorMessage("");
     setMessage("");
+
+    if (!isPasswordValid) {
+      setErrorMessage("Crie uma senha com os requisitos indicados abaixo.");
+      return;
+    }
+
+    setLoading(true);
 
     const { error } = await createClient().auth.signUp({
       email: email.trim(),
@@ -78,8 +95,16 @@ export default function CadastroPage() {
             </label>
             <label className="grid gap-2 text-sm font-bold text-slate-700 sm:col-span-2">Crie uma senha
               <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 font-normal outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-100" />
-              <span className="font-normal text-slate-500">Use pelo menos 8 caracteres.</span>
+              <span className="font-normal text-slate-500">Proteja seu acesso com uma senha forte.</span>
             </label>
+
+            <ul aria-live="polite" className="-mt-2 grid gap-1 text-sm sm:col-span-2 sm:grid-cols-2">
+              {passwordChecks.map((check) => (
+                <li key={check.label} className={check.valid ? "text-emerald-700" : "text-slate-500"}>
+                  {check.valid ? "✓" : "○"} {check.label}
+                </li>
+              ))}
+            </ul>
 
             {errorMessage && <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700 sm:col-span-2">{errorMessage}</p>}
             {message && <p className="flex gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800 sm:col-span-2"><CheckCircle2 className="h-5 w-5 shrink-0" />{message}</p>}
