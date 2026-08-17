@@ -70,6 +70,10 @@ export default function LoginPage() {
             />
           </label>
 
+          <Link className="inline-flex text-sm font-bold text-emerald-700 hover:text-emerald-900 hover:underline" href="/recuperar-senha">
+            Esqueci minha senha
+          </Link>
+
           {message && <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{message}</p>}
 
           <button
