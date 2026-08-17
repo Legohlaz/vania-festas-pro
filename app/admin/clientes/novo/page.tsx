@@ -5,7 +5,7 @@ import { ArrowLeft, Save, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-type CustomerFormField = "name" | "email" | "phone" | "city";
+type CustomerFormField = "name" | "email" | "phone" | "address";
 
 export default function NovoClientePage() {
   const supabase = createClient();
@@ -15,7 +15,7 @@ export default function NovoClientePage() {
     name: "",
     email: "",
     phone: "",
-    city: "",
+    address: "",
     active: true,
   });
 
@@ -54,7 +54,7 @@ export default function NovoClientePage() {
             ["name","Nome"],
             ["email","E-mail"],
             ["phone","Telefone"],
-            ["city","Cidade"],
+            ["address","Endereço completo"],
           ] as [CustomerFormField, string][]).map(([key,label])=>(
             <div key={key}>
               <label className="mb-2 block text-sm font-bold">{label}</label>
@@ -62,6 +62,7 @@ export default function NovoClientePage() {
                 className="h-12 w-full rounded-xl border border-gray-200 px-4"
                 value={form[key]}
                 onChange={e=>setForm({...form,[key]:e.target.value})}
+                placeholder={key === "address" ? "Rua, número, bairro, cidade e CEP" : undefined}
               />
             </div>
           ))}
