@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, CalendarRange, LayoutDashboard, Package, PartyPopper, Truck, Users, WalletCards } from "lucide-react";
+import { AdminNotifications } from "@/components/admin/AdminNotifications";
 
 const links = [
   { href: "/admin/dashboard", label: "Painel", icon: LayoutDashboard },
@@ -57,9 +58,12 @@ export function AdminNavigation() {
           })}
         </nav>
 
-        <Link href="/" className="ml-auto inline-flex h-10 shrink-0 items-center rounded-xl border border-gray-200 px-4 text-sm font-bold text-gray-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <AdminNotifications />
+          <Link href="/" className="inline-flex h-10 items-center rounded-xl border border-gray-200 px-4 text-sm font-bold text-gray-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800">
           Ver site
-        </Link>
+          </Link>
+        </div>
       </div>
     </header>
   );
