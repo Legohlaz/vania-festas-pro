@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Menu,
   ShoppingBag,
+  UserRound,
 } from "lucide-react";
 
 import { Container } from "@/components/common/Container";
@@ -179,6 +180,14 @@ export function Header() {
                     className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-emerald-50 hover:text-emerald-800"
                   >
                     Falar pelo WhatsApp
+                  </Link>
+                  <Link
+                    href="/area-cliente"
+                    onClick={() => setMoreOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-emerald-50 hover:text-emerald-800"
+                  >
+                    <UserRound className="h-4 w-4" />
+                    Área do cliente
                   </Link>
                 </div>
               )}
