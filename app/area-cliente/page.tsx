@@ -6,6 +6,7 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { ArrowLeft, Camera, CheckCircle2, Clock3, LogOut, ShieldAlert, UserRound } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { translateAuthError } from "@/lib/supabase/error-messages";
 
 type CustomerProfile = {
   id: number;
@@ -69,7 +70,7 @@ export default function AreaClientePage() {
     setSubmitting(true);
     setErrorMessage("");
     const { error } = await createClient().auth.signInWithPassword({ email: email.trim(), password });
-    if (error) setErrorMessage(error.message);
+    if (error) setErrorMessage(translateAuthError(error.message));
     else await loadProfile();
     setSubmitting(false);
   }

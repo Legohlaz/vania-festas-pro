@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 import { ArrowLeft, CheckCircle2, UserPlus } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { translateAuthError } from "@/lib/supabase/error-messages";
 
 export default function CadastroPage() {
   const [name, setName] = useState("");
@@ -38,7 +39,7 @@ export default function CadastroPage() {
     setLoading(false);
 
     if (error) {
-      setErrorMessage(error.message);
+      setErrorMessage(translateAuthError(error.message));
       return;
     }
 
