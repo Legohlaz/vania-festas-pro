@@ -10,6 +10,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronDown,
+  CalendarDays,
   MessageCircle,
   Search,
   ShoppingBag,
@@ -1206,6 +1207,26 @@ export function CatalogContent() {
               />
             </div>
 
+            <div className="relative flex min-h-[60px] items-center rounded-2xl border border-gray-200 bg-gray-50 transition focus-within:border-emerald-400 focus-within:bg-white lg:w-[230px]">
+              <CalendarDays
+                size={19}
+                className="pointer-events-none absolute left-4 text-emerald-700"
+              />
+
+              <input
+                id="catalog-event-date"
+                type="date"
+                value={eventDate}
+                min={getToday()}
+                onChange={(event) => {
+                  setEventDate(event.target.value);
+                  setCreatedRequestId(null);
+                }}
+                aria-label="Data do evento para consultar disponibilidade"
+                className="h-[60px] w-full bg-transparent pl-11 pr-3 text-sm font-semibold text-gray-700 outline-none"
+              />
+            </div>
+
             {/* Mais filtros */}
             <button
               type="button"
@@ -1259,6 +1280,44 @@ export function CatalogContent() {
               )}
             </button>
           </form>
+
+          <div
+            className={
+              eventDate
+                ? availabilityError
+                  ? "mt-5 flex flex-col gap-2 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800 sm:flex-row sm:items-center sm:justify-between"
+                  : "mt-5 flex flex-col gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-5 py-4 text-sm text-emerald-900 sm:flex-row sm:items-center sm:justify-between"
+                : "mt-5 flex flex-col gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-600 sm:flex-row sm:items-center sm:justify-between"
+            }
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-800 shadow-sm">
+                <CalendarDays size={18} />
+              </span>
+              <div>
+                <p className="font-black">
+                  {eventDate
+                    ? `Disponibilidade para ${formatEventDate(eventDate)}`
+                    : "Escolha a data do seu evento"}
+                </p>
+                <p className="mt-0.5 text-xs leading-5 opacity-80">
+                  {eventDate
+                    ? availabilityLoading
+                      ? "Consultando o estoque reservado para essa data..."
+                      : availabilityError
+                        ? "Não foi possível consultar a disponibilidade agora."
+                        : "Os cartões abaixo mostram a quantidade disponível de cada item."
+                    : "Ao informar a data, você confere o que está disponível antes de montar sua seleção."}
+                </p>
+              </div>
+            </div>
+
+            {eventDate && !availabilityLoading && !availabilityError && (
+              <span className="w-fit rounded-full bg-white px-3 py-1.5 text-xs font-black text-emerald-800 shadow-sm">
+                Consulta atualizada
+              </span>
+            )}
+          </div>
 
           {/* Categorias */}
           <div
@@ -2115,6 +2174,21 @@ export function CatalogContent() {
                       )}`}
                       imageUrl={
                         product.image_url
+                      }
+                      availability={
+                        eventDate
+                          ? productAvailability[
+                              String(product.id)
+                            ] ?? 0
+                          : undefined
+                      }
+                      availabilityLoading={
+                        Boolean(eventDate) &&
+                        availabilityLoading
+                      }
+                      availabilityError={
+                        Boolean(eventDate) &&
+                        Boolean(availabilityError)
                       }
                       slug={
                         product.slug
