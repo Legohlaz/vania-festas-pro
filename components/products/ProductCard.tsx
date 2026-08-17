@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   Check,
+  PackageCheck,
   Plus,
 } from "lucide-react";
 
@@ -11,6 +12,9 @@ type ProductCardProps = {
   category: string;
   price: string;
   imageUrl?: string | null;
+  availability?: number;
+  availabilityLoading?: boolean;
+  availabilityError?: boolean;
 
   isSelected?: boolean;
 
@@ -23,6 +27,9 @@ export function ProductCard({
   category,
   price,
   imageUrl,
+  availability,
+  availabilityLoading = false,
+  availabilityError = false,
   isSelected = false,
   onAddToSelection,
 }: ProductCardProps) {
@@ -92,6 +99,33 @@ export function ProductCard({
         >
           {price}
         </p>
+
+        {availability !== undefined && (
+          <div
+            className={
+              availabilityError
+                ? "mt-4 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"
+                : availabilityLoading
+                  ? "mt-4 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500"
+                  : availability > 0
+                    ? "mt-4 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800"
+                    : "mt-4 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"
+            }
+          >
+            {availabilityLoading ? (
+              "Consultando disponibilidade..."
+            ) : availabilityError ? (
+              "Disponibilidade não confirmada"
+            ) : availability > 0 ? (
+              <span className="inline-flex items-center gap-1.5">
+                <PackageCheck size={14} />
+                {availability} {availability === 1 ? "unidade disponível" : "unidades disponíveis"}
+              </span>
+            ) : (
+              "Indisponível para a data escolhida"
+            )}
+          </div>
+        )}
 
         {/* Ações */}
         <div
