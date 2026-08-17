@@ -51,6 +51,11 @@ type ProductAvailabilityRow = {
   available_quantity: number | string | null;
 };
 
+type CatalogNotice = {
+  type: "error" | "success" | "info";
+  message: string;
+};
+
 const SELECTION_STORAGE_KEY =
   "vania-festas-minha-selecao";
 
@@ -300,6 +305,9 @@ export function CatalogContent() {
   const [createdRequestId, setCreatedRequestId] =
     useState<number | null>(null);
 
+  const [notice, setNotice] =
+    useState<CatalogNotice | null>(null);
+
   const [
     productAvailability,
     setProductAvailability,
@@ -314,6 +322,13 @@ export function CatalogContent() {
     availabilityError,
     setAvailabilityError,
   ] = useState("");
+
+  function showNotice(
+    type: CatalogNotice["type"],
+    message: string
+  ) {
+    setNotice({ type, message });
+  }
 
   /*
    * Consulta a disponibilidade dos produtos
@@ -800,35 +815,40 @@ export function CatalogContent() {
     const cleanCustomerPhone = customerPhone.trim();
 
     if (!cleanCustomerName) {
-      window.alert(
+      showNotice(
+        "info",
         "Informe seu nome antes de solicitar o orçamento."
       );
       return;
     }
 
     if (!cleanCustomerPhone) {
-      window.alert(
+      showNotice(
+        "info",
         "Informe seu WhatsApp antes de solicitar o orçamento."
       );
       return;
     }
 
     if (!eventDate) {
-      window.alert(
+      showNotice(
+        "info",
         "Escolha a data do evento antes de solicitar o orçamento."
       );
       return;
     }
 
     if (availabilityLoading) {
-      window.alert(
+      showNotice(
+        "info",
         "Aguarde a consulta de disponibilidade para a data escolhida."
       );
       return;
     }
 
     if (availabilityError) {
-      window.alert(
+      showNotice(
+        "error",
         "Não foi possível confirmar a disponibilidade para esta data. Tente novamente."
       );
       return;
@@ -850,7 +870,8 @@ export function CatalogContent() {
       const availableQuantity =
         productAvailability[String(unavailableProduct.id)] ?? 0;
 
-      window.alert(
+      showNotice(
+        "error",
         availableQuantity <= 0
           ? `${unavailableProduct.name} não está disponível para esta data.`
           : `${unavailableProduct.name}: há apenas ${availableQuantity} ${
@@ -948,6 +969,11 @@ export function CatalogContent() {
         "_blank",
         "noopener,noreferrer"
       );
+
+      showNotice(
+        "success",
+        `Solicitação #${reservationId} registrada. Abrimos o WhatsApp para você enviar a mensagem.`
+      );
     } catch (error) {
       const reservationError = error as {
         message?: string;
@@ -955,7 +981,8 @@ export function CatalogContent() {
 
       console.error("Erro ao criar solicitação de orçamento:", error);
 
-      window.alert(
+      showNotice(
+        "error",
         reservationError?.message
           ? `Não foi possível registrar a solicitação: ${reservationError.message}`
           : "Não foi possível registrar a solicitação. Tente novamente."
@@ -1159,6 +1186,31 @@ export function CatalogContent() {
 
   return (
     <>
+      {notice && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={
+            notice.type === "error"
+              ? "fixed inset-x-4 top-5 z-50 mx-auto flex max-w-xl items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800 shadow-xl"
+              : notice.type === "success"
+                ? "fixed inset-x-4 top-5 z-50 mx-auto flex max-w-xl items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900 shadow-xl"
+                : "fixed inset-x-4 top-5 z-50 mx-auto flex max-w-xl items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm font-semibold text-blue-900 shadow-xl"
+          }
+        >
+          <p className="flex-1 leading-6">{notice.message}</p>
+
+          <button
+            type="button"
+            onClick={() => setNotice(null)}
+            aria-label="Fechar aviso"
+            className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition hover:bg-white/70"
+          >
+            <X size={18} />
+          </button>
+        </div>
+      )}
+
       {/* Pesquisa e filtros */}
       <section
         className="bg-white"
