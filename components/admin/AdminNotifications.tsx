@@ -5,6 +5,26 @@ import { Bell } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+type ReservationAlert = {
+  id: number;
+  service_fee: number | null;
+  amount_paid: number | null;
+  reservation_items: { quantity: number | null; unit_price: number | null }[] | null;
+};
+
+function dateKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function hasBalance(reservation: ReservationAlert) {
+  const total = (reservation.reservation_items ?? []).reduce(
+    (sum, item) => sum + Number(item.quantity ?? 0) * Number(item.unit_price ?? 0),
+    Number(reservation.service_fee ?? 0)
+  );
+
+  return total - Number(reservation.amount_paid ?? 0) > 0.009;
+}
+
 export function AdminNotifications() {
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -13,10 +33,32 @@ export function AdminNotifications() {
     let active = true;
 
     async function loadUnreadCount() {
-      const { count } = await supabase
-        .from("admin_notifications")
-        .select("id", { count: "exact", head: true })
-        .is("read_at", null);
+      const today = new Date();
+      const inThreeDays = new Date(today);
+      inThreeDays.setDate(today.getDate() + 3);
+      const inThirtyDays = new Date(today);
+      inThirtyDays.setDate(today.getDate() + 30);
+
+      const [stored, upcoming, balances] = await Promise.all([
+        supabase
+          .from("admin_notifications")
+          .select("id", { count: "exact", head: true })
+          .is("read_at", null),
+        supabase
+          .from("reservations")
+          .select("id")
+          .in("status", ["pending", "confirmed"])
+          .gte("event_date", dateKey(today))
+          .lte("event_date", dateKey(inThreeDays)),
+        supabase
+          .from("reservations")
+          .select("id,service_fee,amount_paid,reservation_items(quantity,unit_price)")
+          .in("status", ["pending", "confirmed"])
+          .gte("event_date", dateKey(today))
+          .lte("event_date", dateKey(inThirtyDays)),
+      ]);
+
+      const count = Number(stored.count ?? 0) + (upcoming.data?.length ?? 0) + ((balances.data ?? []) as ReservationAlert[]).filter(hasBalance).length;
 
       if (active) setUnreadCount(count ?? 0);
     }
