@@ -196,6 +196,14 @@ export function Header() {
 
           {/* Ações */}
           <div className="flex shrink-0 items-center gap-3">
+            <Link
+              href="/area-cliente"
+              title="Área do cliente"
+              className="hidden items-center gap-2 rounded-xl border border-emerald-700 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-900 transition-colors hover:bg-emerald-100 lg:inline-flex"
+            >
+              <UserRound className="h-4 w-4" />
+              Área do cliente
+            </Link>
             {/* Minha seleção */}
             <Link
               href="/catalogo?selecao=aberta"
@@ -230,6 +238,15 @@ export function Header() {
               className="hidden rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 sm:inline-flex"
             >
               Solicitar orçamento
+            </Link>
+
+            <Link
+              href="/area-cliente"
+              aria-label="Área do cliente"
+              title="Área do cliente"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 transition-colors hover:border-emerald-400 hover:bg-emerald-100 lg:hidden"
+            >
+              <UserRound size={20} />
             </Link>
 
             <button
