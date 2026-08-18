@@ -6,6 +6,7 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import {
   ArrowLeft,
   CalendarDays,
+  CalendarPlus,
   Camera,
   CheckCircle2,
   ChevronDown,
@@ -74,6 +75,25 @@ function reservationItemName(item: ReservationItem) {
   return product?.name ?? "Item da reserva";
 }
 
+function googleCalendarLink(reservation: CustomerReservation, customerName: string) {
+  const start = new Date(`${reservation.event_date}T12:00:00`);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  const formatCalendarDate = (date: Date) => date.toISOString().slice(0, 10).replaceAll("-", "");
+  const items = (reservation.reservation_items ?? [])
+    .map((item) => `${Number(item.quantity ?? 0)}x ${reservationItemName(item)}`)
+    .join(", ");
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `Evento Vânia Festas — Reserva #${reservation.id}`,
+    dates: `${formatCalendarDate(start)}/${formatCalendarDate(end)}`,
+    details: `Reserva de ${customerName}.${items ? ` Itens: ${items}.` : ""}`,
+    location: reservation.event_address ?? "",
+  });
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
 function statusDetails(status: CustomerProfile["approval_status"]) {
   if (status === "approved") {
     return {
@@ -115,6 +135,7 @@ function ReservationCard({ reservation, customerName }: { reservation: CustomerR
   const whatsappLink = createWhatsAppLink({
     message: `Olá! Sou ${customerName} e gostaria de falar sobre a reserva #${reservation.id}, marcada para ${formattedDate}.${itemsSummary ? ` Itens: ${itemsSummary}.` : ""}`,
   });
+  const calendarLink = googleCalendarLink(reservation, customerName);
 
   return (
     <article className="overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -199,6 +220,18 @@ function ReservationCard({ reservation, customerName }: { reservation: CustomerR
             <MessageCircle className="h-4 w-4" />
             Falar sobre esta reserva
           </a>
+
+          {reservation.status === "confirmed" && (
+            <a
+              href={calendarLink}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-emerald-700 bg-white px-4 text-sm font-bold text-emerald-800 transition hover:bg-emerald-50"
+            >
+              <CalendarPlus className="h-4 w-4" />
+              Adicionar à agenda
+            </a>
+          )}
         </div>
       )}
     </article>
