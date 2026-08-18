@@ -12,6 +12,7 @@ import {
   ChevronUp,
   LogOut,
   MapPin,
+  MessageCircle,
   PackageOpen,
   ShieldAlert,
   Clock3,
@@ -20,6 +21,7 @@ import {
 
 import { createClient } from "@/lib/supabase/client";
 import { translateAuthError } from "@/lib/supabase/error-messages";
+import { createWhatsAppLink } from "@/lib/whatsapp";
 
 type CustomerProfile = {
   id: number;
@@ -99,7 +101,7 @@ function statusDetails(status: CustomerProfile["approval_status"]) {
   };
 }
 
-function ReservationCard({ reservation }: { reservation: CustomerReservation }) {
+function ReservationCard({ reservation, customerName }: { reservation: CustomerReservation; customerName: string }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const currentStatus = reservationStatus(reservation.status);
   const itemsTotal = reservationItemsTotal(reservation);
@@ -107,6 +109,12 @@ function ReservationCard({ reservation }: { reservation: CustomerReservation }) 
   const paid = Number(reservation.amount_paid ?? 0);
   const balance = Math.max(total - paid, 0);
   const formattedDate = new Date(`${reservation.event_date}T12:00:00`).toLocaleDateString("pt-BR");
+  const itemsSummary = (reservation.reservation_items ?? [])
+    .map((item) => `${Number(item.quantity ?? 0)}x ${reservationItemName(item)}`)
+    .join(", ");
+  const whatsappLink = createWhatsAppLink({
+    message: `Olá! Sou ${customerName} e gostaria de falar sobre a reserva #${reservation.id}, marcada para ${formattedDate}.${itemsSummary ? ` Itens: ${itemsSummary}.` : ""}`,
+  });
 
   return (
     <article className="overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -181,6 +189,16 @@ function ReservationCard({ reservation }: { reservation: CustomerReservation }) 
             <div className="flex justify-between gap-3"><dt className="text-slate-500">Valor recebido</dt><dd className="font-bold text-emerald-700">{currency.format(paid)}</dd></div>
             <div className="flex justify-between gap-3"><dt className="text-slate-500">Saldo restante</dt><dd className={`font-bold ${balance > 0 ? "text-amber-700" : "text-emerald-700"}`}>{balance > 0 ? currency.format(balance) : "Quitado"}</dd></div>
           </dl>
+
+          <a
+            href={whatsappLink}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-800 px-4 text-sm font-bold text-white transition hover:bg-emerald-900"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Falar sobre esta reserva
+          </a>
         </div>
       )}
     </article>
@@ -377,7 +395,7 @@ export default function AreaClientePage() {
                 <div><h2 className="font-black text-slate-900">Minhas reservas</h2><p className="text-sm text-slate-500">Toque em uma reserva para ver os itens e os valores.</p></div>
               </div>
               <div className="mt-5 space-y-3">
-                {reservations.length === 0 ? <p className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">Você ainda não possui reservas vinculadas a este cadastro.</p> : reservations.map((reservation) => <ReservationCard key={reservation.id} reservation={reservation} />)}
+                {reservations.length === 0 ? <p className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">Você ainda não possui reservas vinculadas a este cadastro.</p> : reservations.map((reservation) => <ReservationCard key={reservation.id} reservation={reservation} customerName={profile.name} />)}
               </div>
             </section>
           )}
