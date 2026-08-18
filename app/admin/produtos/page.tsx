@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   CircleOff,
+  CopyPlus,
   Package,
   Plus,
   Search,
@@ -27,6 +28,23 @@ type Product = {
 };
 
 type StatusFilter = "todos" | "ativos" | "inativos";
+
+type ProductCopySource = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  search_keywords: string[] | null;
+  category: string | null;
+  event_type: string[] | null;
+  price: number | null;
+  image_url: string | null;
+};
+
+type ProductImage = {
+  image_url: string;
+  position: number;
+};
 
 function formatPrice(price: number | null) {
   if (price === null || price === undefined) {
@@ -57,6 +75,9 @@ export default function ProdutosPage() {
     useState<string | null>(null);
 
   const [updatingProductId, setUpdatingProductId] =
+    useState<string | null>(null);
+
+  const [duplicatingProductId, setDuplicatingProductId] =
     useState<string | null>(null);
 
   const [search, setSearch] = useState("");
@@ -184,6 +205,192 @@ export default function ProdutosPage() {
     setSearch("");
     setCategoryFilter("todas");
     setStatusFilter("todos");
+  }
+
+  function getStorageFilePath(imageUrl: string | null) {
+    if (!imageUrl) {
+      return null;
+    }
+
+    const marker = "/storage/v1/object/public/products/";
+    const markerIndex = imageUrl.indexOf(marker);
+
+    if (markerIndex === -1) {
+      return null;
+    }
+
+    const encodedFilePath = imageUrl.substring(
+      markerIndex + marker.length
+    );
+
+    return decodeURIComponent(encodedFilePath.split("?")[0]) || null;
+  }
+
+  async function duplicateProduct(product: Product) {
+    const confirmed = window.confirm(
+      `Criar uma cópia de "${product.name}"?\n\nA nova cópia ficará inativa e sem estoque para você revisar antes de publicar.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setActionMessage(null);
+    setDuplicatingProductId(product.id);
+
+    const supabase = createClient();
+    const timestamp = Date.now();
+    const copiedFilePaths: string[] = [];
+    let createdProductId: string | null = null;
+
+    try {
+      const { data: sourceData, error: sourceError } = await supabase
+        .from("products")
+        .select(
+          "id, name, slug, description, search_keywords, category, event_type, price, image_url"
+        )
+        .eq("id", product.id)
+        .single();
+
+      if (sourceError || !sourceData) {
+        throw new Error(
+          `Não foi possível carregar o produto para duplicar: ${sourceError?.message ?? "produto não encontrado"}`
+        );
+      }
+
+      const source = sourceData as ProductCopySource;
+
+      const { data: sourceGallery, error: galleryError } = await supabase
+        .from("product_images")
+        .select("image_url, position")
+        .eq("product_id", source.id)
+        .order("position");
+
+      if (galleryError) {
+        throw new Error(
+          `Não foi possível carregar as fotos do produto: ${galleryError.message}`
+        );
+      }
+
+      const copySlug = `${source.slug}-copia-${timestamp}`;
+
+      async function copyImageUrl(
+        imageUrl: string,
+        suffix: string
+      ) {
+        const sourcePath = getStorageFilePath(imageUrl);
+
+        // URLs externas não podem ser copiadas pelo Storage. Mantemos a referência
+        // para que o cadastro continue funcional e possa ser substituído depois.
+        if (!sourcePath) {
+          return imageUrl;
+        }
+
+        const extension = sourcePath.split(".").pop() ?? "jpg";
+        const destinationPath = `copias/${copySlug}-${suffix}.${extension}`;
+
+        const { error: copyError } = await supabase.storage
+          .from("products")
+          .copy(sourcePath, destinationPath);
+
+        if (copyError) {
+          throw new Error(
+            `Não foi possível copiar uma das imagens: ${copyError.message}`
+          );
+        }
+
+        copiedFilePaths.push(destinationPath);
+
+        return supabase.storage
+          .from("products")
+          .getPublicUrl(destinationPath).data.publicUrl;
+      }
+
+      const copiedPrimaryImage = source.image_url
+        ? await copyImageUrl(source.image_url, "capa")
+        : null;
+
+      const copiedGallery = await Promise.all(
+        ((sourceGallery ?? []) as ProductImage[]).map(
+          async (image, index) => ({
+            image_url: await copyImageUrl(
+              image.image_url,
+              `galeria-${index}`
+            ),
+            position: image.position,
+          })
+        )
+      );
+
+      const { data: createdProduct, error: insertError } = await supabase
+        .from("products")
+        .insert({
+          name: `Cópia de ${source.name}`,
+          slug: copySlug,
+          description: source.description,
+          search_keywords: source.search_keywords ?? [],
+          category: source.category,
+          event_type: source.event_type ?? [],
+          price: source.price,
+          stock_quantity: 0,
+          image_url: copiedPrimaryImage,
+          featured: false,
+          active: false,
+        })
+        .select("id")
+        .single();
+
+      if (insertError || !createdProduct) {
+        throw new Error(
+          `Não foi possível criar a cópia: ${insertError?.message ?? "produto não identificado"}`
+        );
+      }
+
+      createdProductId = String(createdProduct.id);
+
+      if (copiedGallery.length > 0) {
+        const { error: galleryInsertError } = await supabase
+          .from("product_images")
+          .insert(
+            copiedGallery.map((image) => ({
+              product_id: createdProduct.id,
+              image_url: image.image_url,
+              position: image.position,
+            }))
+          );
+
+        if (galleryInsertError) {
+          throw new Error(
+            `A cópia foi criada, mas não foi possível salvar as fotos: ${galleryInsertError.message}`
+          );
+        }
+      }
+
+      window.location.href = `/admin/produtos/${createdProduct.id}/editar`;
+    } catch (error) {
+      if (createdProductId) {
+        await supabase
+          .from("products")
+          .delete()
+          .eq("id", createdProductId);
+      }
+
+      if (copiedFilePaths.length > 0) {
+        await supabase.storage
+          .from("products")
+          .remove(copiedFilePaths);
+      }
+
+      console.error("Erro ao duplicar produto:", error);
+
+      setActionMessage(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível duplicar o produto. Tente novamente."
+      );
+
+      setDuplicatingProductId(null);
+    }
   }
 
   async function toggleProductStatus(
@@ -676,7 +883,7 @@ export default function ProdutosPage() {
                           </div>
 
                           {/* Status */}
-                          <div className="flex items-center gap-4">
+                          <div className="flex flex-wrap items-center gap-3">
                             <button
                               type="button"
                               onClick={() =>
@@ -728,6 +935,21 @@ export default function ProdutosPage() {
                                     ? "Ativo"
                                     : "Inativo"}
                               </span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => duplicateProduct(product)}
+                              disabled={
+                                duplicatingProductId === product.id
+                              }
+                              className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-800 transition hover:bg-emerald-100 disabled:cursor-wait disabled:opacity-60"
+                              title="Criar uma cópia para editar"
+                            >
+                              <CopyPlus size={16} />
+                              {duplicatingProductId === product.id
+                                ? "Duplicando..."
+                                : "Duplicar"}
                             </button>
 
                             <Link
