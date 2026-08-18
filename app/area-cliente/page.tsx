@@ -395,6 +395,9 @@ export default function AreaClientePage() {
 
   const status = statusDetails(profile.approval_status);
   const StatusIcon = status.Icon;
+  const catalogContactLink = createWhatsAppLink({
+    message: `Olá! Sou ${profile.name} e gostaria de solicitar um orçamento para meu evento.`,
+  });
 
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-10 sm:px-8">
@@ -429,6 +432,17 @@ export default function AreaClientePage() {
               </div>
               <div className="mt-5 space-y-3">
                 {reservations.length === 0 ? <p className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">Você ainda não possui reservas vinculadas a este cadastro.</p> : reservations.map((reservation) => <ReservationCard key={reservation.id} reservation={reservation} customerName={profile.name} />)}
+              </div>
+            </section>
+          )}
+
+          {profile.approval_status === "approved" && (
+            <section className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+              <h2 className="font-black text-emerald-950">Planejando um novo evento?</h2>
+              <p className="mt-1 text-sm leading-6 text-emerald-900">Explore os itens disponíveis ou fale conosco para montar seu orçamento.</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <Link href="/catalogo" className="inline-flex h-11 items-center justify-center rounded-xl bg-emerald-800 px-4 text-sm font-bold text-white transition hover:bg-emerald-900">Explorar catálogo</Link>
+                <a href={catalogContactLink} target="_blank" rel="noreferrer" className="inline-flex h-11 items-center justify-center rounded-xl border border-emerald-700 bg-white px-4 text-sm font-bold text-emerald-800 transition hover:bg-emerald-100">Solicitar orçamento</a>
               </div>
             </section>
           )}
