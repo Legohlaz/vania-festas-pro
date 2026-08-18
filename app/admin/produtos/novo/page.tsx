@@ -48,6 +48,7 @@ export default function NovoProdutoPage() {
 
   const [price, setPrice] = useState("");
   const [stockQuantity, setStockQuantity] = useState("1");
+  const [minimumStock, setMinimumStock] = useState("5");
   const [maintenanceStatus, setMaintenanceStatus] = useState("disponivel");
   const [maintenanceNotes, setMaintenanceNotes] = useState("");
   const [isKit, setIsKit] = useState(false);
@@ -196,6 +197,13 @@ export default function NovoProdutoPage() {
       return;
     }
 
+    const numericMinimumStock = Number(minimumStock);
+
+    if (!Number.isInteger(numericMinimumStock) || numericMinimumStock < 0) {
+      setErrorMessage("Informe um estoque mínimo válido.");
+      return;
+    }
+
     const normalizedKitItems = kitItems
       .map((item) => ({ product_id: Number(item.productId), quantity: Number(item.quantity) }))
       .filter((item) => Number.isInteger(item.product_id) && item.product_id > 0 && Number.isInteger(item.quantity) && item.quantity > 0);
@@ -298,6 +306,7 @@ export default function NovoProdutoPage() {
 
             price: numericPrice,
             stock_quantity: numericStockQuantity,
+            minimum_stock: numericMinimumStock,
             maintenance_status: maintenanceStatus,
             maintenance_notes: maintenanceNotes.trim() || null,
             is_kit: isKit,
@@ -710,6 +719,23 @@ export default function NovoProdutoPage() {
             />
             <p className="text-xs text-gray-500" style={{ marginTop: "8px" }}>
               Informe quantas unidades deste produto estão disponíveis no acervo.
+            </p>
+            <label htmlFor="minimumStock" className="mt-5 block text-sm font-bold text-gray-800">
+              Estoque mínimo para alerta
+            </label>
+            <input
+              id="minimumStock"
+              type="number"
+              min="0"
+              step="1"
+              value={minimumStock}
+              onChange={(event) => setMinimumStock(event.target.value)}
+              placeholder="Ex.: 5"
+              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-700"
+              style={{ marginTop: "10px", maxWidth: "320px" }}
+            />
+            <p className="text-xs text-gray-500" style={{ marginTop: "8px" }}>
+              A administração será avisada quando o estoque chegar a esta quantidade.
             </p>
           </div>
 

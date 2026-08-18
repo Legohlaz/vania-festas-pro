@@ -64,8 +64,6 @@ const columns: {
     description: "Itens em uso no evento do cliente.",
     icon: Truck,
     className: "border-violet-200 bg-violet-50 text-violet-700",
-    nextStatus: "returned",
-    action: "Finalizar devolução",
   },
   {
     status: "returned",
@@ -297,6 +295,11 @@ export default function LogisticaPage() {
                               <CheckCircle2 className="h-4 w-4" />
                               {updatingId === reservation.id ? "Atualizando..." : column.action}
                             </button>
+                          )}
+                          {column.status === "delivered" && (
+                            <Link href={`/admin/reservas/${reservation.id}`} className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 text-xs font-bold text-violet-800 transition hover:bg-violet-100">
+                              <ClipboardList className="h-4 w-4" /> Conferir devolução
+                            </Link>
                           )}
                         </article>
                       ))

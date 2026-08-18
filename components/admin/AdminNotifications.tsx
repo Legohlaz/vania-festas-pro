@@ -12,6 +12,13 @@ type ReservationAlert = {
   reservation_items: { quantity: number | null; unit_price: number | null }[] | null;
 };
 
+type ProductAlert = {
+  id: number;
+  stock_quantity: number | null;
+  minimum_stock: number | null;
+  maintenance_status: string | null;
+};
+
 function dateKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
@@ -39,7 +46,7 @@ export function AdminNotifications() {
       const inThirtyDays = new Date(today);
       inThirtyDays.setDate(today.getDate() + 30);
 
-      const [stored, upcoming, balances] = await Promise.all([
+      const [stored, upcoming, balances, products] = await Promise.all([
         supabase
           .from("admin_notifications")
           .select("id", { count: "exact", head: true })
@@ -56,9 +63,17 @@ export function AdminNotifications() {
           .in("status", ["pending", "confirmed"])
           .gte("event_date", dateKey(today))
           .lte("event_date", dateKey(inThirtyDays)),
+        supabase
+          .from("products")
+          .select("id,stock_quantity,minimum_stock,maintenance_status")
+          .eq("active", true),
       ]);
 
-      const count = Number(stored.count ?? 0) + (upcoming.data?.length ?? 0) + ((balances.data ?? []) as ReservationAlert[]).filter(hasBalance).length;
+      const productAlerts = ((products.data ?? []) as ProductAlert[]).filter((product) =>
+        Number(product.stock_quantity ?? 0) <= Number(product.minimum_stock ?? 5) ||
+        (product.maintenance_status ?? "disponivel") !== "disponivel"
+      ).length;
+      const count = Number(stored.count ?? 0) + (upcoming.data?.length ?? 0) + ((balances.data ?? []) as ReservationAlert[]).filter(hasBalance).length + productAlerts;
 
       if (active) setUnreadCount(count ?? 0);
     }

@@ -23,6 +23,7 @@ type Product = {
   category: string | null;
   price: number | null;
   stock_quantity: number | null;
+  minimum_stock: number | null;
   image_url: string | null;
   active: boolean | null;
   maintenance_status: string | null;
@@ -115,7 +116,7 @@ export default function ProdutosPage() {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, name, category, price, stock_quantity, image_url, active, maintenance_status, maintenance_notes, is_kit"
+          "id, name, category, price, stock_quantity, minimum_stock, image_url, active, maintenance_status, maintenance_notes, is_kit"
         )
         .order("created_at", {
           ascending: false,
@@ -212,7 +213,7 @@ export default function ProdutosPage() {
     const lowStock = products.filter((product) => {
       const quantity = product.stock_quantity ?? 0;
 
-      return quantity > 0 && quantity <= 5;
+      return quantity > 0 && quantity <= Number(product.minimum_stock ?? 5);
     }).length;
 
     return {
@@ -367,6 +368,7 @@ export default function ProdutosPage() {
           event_type: source.event_type ?? [],
           price: source.price,
           stock_quantity: 0,
+          minimum_stock: 5,
           image_url: copiedPrimaryImage,
           featured: false,
           active: false,
@@ -853,20 +855,21 @@ export default function ProdutosPage() {
                     {filteredProducts.map(
                       (product) => {
                         const quantity = product.stock_quantity ?? 0;
+                        const minimumStock = Number(product.minimum_stock ?? 5);
                         const operationalStatus = getOperationalStatus(
                           product.maintenance_status
                         );
                         const stockLabel =
                           quantity <= 0
                             ? "Sem estoque"
-                            : quantity <= 5
-                              ? "Estoque baixo"
+                            : quantity <= minimumStock
+                              ? "Estoque mínimo"
                               : "Estoque disponível";
 
                         const stockClassName =
                           quantity <= 0
                             ? "bg-red-50 text-red-700"
-                            : quantity <= 5
+                            : quantity <= minimumStock
                               ? "bg-amber-50 text-amber-800"
                               : "bg-emerald-50 text-emerald-800";
 
@@ -936,6 +939,9 @@ export default function ProdutosPage() {
                               </span>
                               <span className="text-sm font-semibold text-gray-500">
                                 {quantity} {quantity === 1 ? "unidade" : "unidades"}
+                              </span>
+                              <span className="text-xs font-medium text-gray-400">
+                                alerta em {minimumStock}
                               </span>
                               <span
                                 className={`rounded-full px-2.5 py-1 text-xs font-bold ${operationalStatus.className}`}

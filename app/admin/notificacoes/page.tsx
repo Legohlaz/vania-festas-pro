@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, CheckCheck, CircleDollarSign, Clock3, Truck, UserRoundPlus } from "lucide-react";
+import { Bell, CheckCheck, CircleDollarSign, Clock3, Package, Truck, UserRoundPlus, Wrench } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -25,7 +25,15 @@ type ReservationAlert = {
 };
 
 type AttentionNotification = StoredNotification & {
-  kind?: "event" | "balance";
+  kind?: "event" | "balance" | "stock" | "maintenance";
+};
+
+type ProductAlert = {
+  id: number;
+  name: string;
+  stock_quantity: number | null;
+  minimum_stock: number | null;
+  maintenance_status: string | null;
 };
 
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -64,7 +72,7 @@ export default function NotificationsPage() {
     const inThirtyDays = new Date(today);
     inThirtyDays.setDate(today.getDate() + 30);
 
-    const [storedResult, eventsResult, balancesResult] = await Promise.all([
+    const [storedResult, eventsResult, balancesResult, productsResult] = await Promise.all([
       supabase
         .from("admin_notifications")
         .select("id,type,title,message,href,read_at,created_at")
@@ -84,9 +92,14 @@ export default function NotificationsPage() {
         .gte("event_date", dateKey(today))
         .lte("event_date", dateKey(inThirtyDays))
         .order("event_date", { ascending: true }),
+      supabase
+        .from("products")
+        .select("id,name,stock_quantity,minimum_stock,maintenance_status")
+        .eq("active", true)
+        .order("name"),
     ]);
 
-    const error = storedResult.error ?? eventsResult.error ?? balancesResult.error;
+    const error = storedResult.error ?? eventsResult.error ?? balancesResult.error ?? productsResult.error;
     if (error) {
       setErrorMessage(error.message);
       setLoading(false);
@@ -115,9 +128,33 @@ export default function NotificationsPage() {
         created_at: `${reservation.event_date}T12:00:00`,
         kind: "balance",
       }));
+    const stockAlerts: AttentionNotification[] = ((productsResult.data ?? []) as ProductAlert[])
+      .filter((product) => Number(product.stock_quantity ?? 0) <= Number(product.minimum_stock ?? 5))
+      .map((product) => ({
+        id: -(2_000_000 + product.id),
+        type: "reservation_pending",
+        title: `Estoque mínimo: ${product.name}`,
+        message: `${Number(product.stock_quantity ?? 0)} unidades em estoque. O alerta foi definido para ${Number(product.minimum_stock ?? 5)} unidades.`,
+        href: `/admin/produtos/${product.id}/editar`,
+        read_at: null,
+        created_at: new Date().toISOString(),
+        kind: "stock",
+      }));
+    const maintenanceAlerts: AttentionNotification[] = ((productsResult.data ?? []) as ProductAlert[])
+      .filter((product) => (product.maintenance_status ?? "disponivel") !== "disponivel")
+      .map((product) => ({
+        id: -(3_000_000 + product.id),
+        type: "reservation_pending",
+        title: `Atenção operacional: ${product.name}`,
+        message: `Produto marcado como ${product.maintenance_status === "limpeza" ? "em limpeza" : product.maintenance_status === "manutencao" ? "em manutenção" : "avariado"}.`,
+        href: `/admin/produtos/${product.id}/editar`,
+        read_at: null,
+        created_at: new Date().toISOString(),
+        kind: "maintenance",
+      }));
 
     setNotifications((storedResult.data ?? []) as StoredNotification[]);
-    setAttention([...eventAlerts, ...balanceAlerts]);
+    setAttention([...eventAlerts, ...balanceAlerts, ...stockAlerts, ...maintenanceAlerts]);
     setLoading(false);
   }
 
@@ -155,7 +192,7 @@ export default function NotificationsPage() {
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">Central de avisos</p>
             <h1 className="mt-3 text-4xl font-black tracking-tight text-slate-900">Notificações</h1>
-            <p className="mt-2 text-sm text-slate-500">Cadastros pendentes, eventos próximos e saldos a receber.</p>
+            <p className="mt-2 text-sm text-slate-500">Cadastros pendentes, eventos próximos, pagamentos, estoque e manutenção.</p>
           </div>
           <button type="button" onClick={markAllAsRead} disabled={markingAll || notifications.every((notification) => notification.read_at)} className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-emerald-700 px-5 text-sm font-bold text-emerald-800 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50">
             <CheckCheck className="h-4 w-4" />
@@ -173,8 +210,8 @@ export default function NotificationsPage() {
           {!loading && !errorMessage && allNotifications.length === 0 && <p className="p-8 text-center text-sm text-slate-500">Nenhuma notificação por enquanto.</p>}
           {!loading && !errorMessage && allNotifications.length > 0 && <div className="divide-y divide-slate-100">{allNotifications.map((notification) => {
             const StoredIcon = notificationIcon(notification.type);
-            const Icon = notification.kind === "event" ? Truck : notification.kind === "balance" ? CircleDollarSign : StoredIcon;
-            const background = notification.kind ? "bg-amber-50 text-amber-700" : notification.read_at ? "bg-slate-100 text-slate-500" : "bg-emerald-50 text-emerald-700";
+            const Icon = notification.kind === "event" ? Truck : notification.kind === "balance" ? CircleDollarSign : notification.kind === "stock" ? Package : notification.kind === "maintenance" ? Wrench : StoredIcon;
+            const background = notification.kind === "stock" || notification.kind === "maintenance" ? "bg-rose-50 text-rose-700" : notification.kind ? "bg-amber-50 text-amber-700" : notification.read_at ? "bg-slate-100 text-slate-500" : "bg-emerald-50 text-emerald-700";
             const content = <><span className={`mt-0.5 rounded-xl p-3 ${background}`}><Icon className="h-5 w-5" /></span><span className="min-w-0 flex-1"><span className="flex flex-wrap items-center gap-2"><strong className="text-slate-900">{notification.title}</strong>{notification.kind ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">Atenção</span> : !notification.read_at && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800">Novo</span>}</span><span className="mt-1 block text-sm leading-6 text-slate-500">{notification.message}</span>{!notification.kind && <span className="mt-2 block text-xs text-slate-400">{new Date(notification.created_at).toLocaleString("pt-BR")}</span>}</span></>;
             const className = `flex gap-4 px-5 py-5 transition ${notification.read_at ? "bg-white" : "bg-emerald-50/40 hover:bg-emerald-50"}`;
             return notification.href ? <Link key={`${notification.kind ?? "stored"}-${notification.id}`} href={notification.href} onClick={() => void markAsRead(notification)} className={className}>{content}</Link> : <button key={notification.id} type="button" onClick={() => void markAsRead(notification)} className={`${className} w-full text-left`}>{content}</button>;

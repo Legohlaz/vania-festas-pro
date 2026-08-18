@@ -10,6 +10,7 @@ import { CopyReservationSummaryButton } from "@/components/admin/CopyReservation
 import { ReservationActions } from "@/components/admin/ReservationActions";
 import { ReservationLogisticsChecklist } from "@/components/admin/ReservationLogisticsChecklist";
 import { ReservationPayments } from "@/components/admin/ReservationPayments";
+import { ReservationReturnCheck } from "@/components/admin/ReservationReturnCheck";
 import { createClient } from "@/lib/supabase/client";
 
 type Reservation = {
@@ -26,6 +27,7 @@ type Reservation = {
 };
 
 type ReservationItem = {
+  id: number;
   product_id: number | null;
   product_name: string | null;
   quantity: number | null;
@@ -33,6 +35,7 @@ type ReservationItem = {
 };
 
 type ReservationItemRow = {
+  id: number;
   product_id: number | null;
   quantity: number | null;
   unit_price: number | null;
@@ -95,7 +98,7 @@ export default function ReservationDetailsPage() {
           .single(),
         supabase
           .from("reservation_items")
-          .select("product_id, quantity, unit_price")
+          .select("id, product_id, quantity, unit_price")
           .eq("reservation_id", reservationId),
       ]);
 
@@ -229,7 +232,7 @@ export default function ReservationDetailsPage() {
                   </div>
                 </div>
                 <div className="mt-4 grid gap-2">
-                  {logisticsOptions.map((option) => (
+                  {logisticsOptions.filter((option) => option.value !== "returned").map((option) => (
                     <button
                       key={option.value}
                       type="button"
@@ -244,6 +247,7 @@ export default function ReservationDetailsPage() {
               </section>
             )}
             {reservation.status !== "cancelled" && <ReservationLogisticsChecklist reservationId={reservation.id} />}
+            {reservation.status !== "cancelled" && (logisticsStatus === "delivered" || logisticsStatus === "returned") && <ReservationReturnCheck reservationId={reservation.id} logisticsStatus={logisticsStatus} onFinished={() => setReservation((current) => current ? { ...current, logistics_status: "returned" } : current)} />}
             {reservation.status !== "cancelled" && <ReservationPayments reservationId={reservation.id} onTotalChange={(nextAmountPaid) => setReservation({ ...reservation, amount_paid: nextAmountPaid })} />}
             <section className="rounded-2xl bg-emerald-800 p-6 text-white shadow-sm"><p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-100">Resumo financeiro</p><p className="mt-5 text-sm text-emerald-100">Total da reserva</p><p className="mt-1 text-4xl font-black tracking-tight">{currency.format(total)}</p>{serviceFee > 0 && <p className="mt-2 text-sm text-emerald-100">Itens: {currency.format(itemsTotal)} · Entrega/montagem: {currency.format(serviceFee)}</p>}<div className="mt-5 grid grid-cols-2 gap-3 border-t border-emerald-700 pt-5 text-sm"><div><p className="text-emerald-100">Recebido</p><p className="mt-1 text-lg font-bold">{currency.format(amountPaid)}</p></div><div><p className="text-emerald-100">Saldo restante</p><p className="mt-1 text-lg font-bold">{currency.format(balance)}</p></div></div><div className="mt-5 grid grid-cols-2 gap-3 border-t border-emerald-700 pt-5 text-sm"><div><p className="text-emerald-100">Produtos</p><p className="mt-1 text-lg font-bold">{items.length}</p></div><div><p className="text-emerald-100">Unidades</p><p className="mt-1 text-lg font-bold">{totalQuantity}</p></div></div></section>
             {reservation.status !== "cancelled" && <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h2 className="font-bold text-slate-900">Ações da reserva</h2><ReservationActions reservationId={reservation.id} status={reservation.status} /></section>}
