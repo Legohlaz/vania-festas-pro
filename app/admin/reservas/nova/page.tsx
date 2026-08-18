@@ -75,6 +75,7 @@ export default function NovaReservaPage() {
               "id,name,price,stock_quantity,active"
             )
             .eq("active", true)
+            .eq("maintenance_status", "disponivel")
             .order("name"),
         ]);
 

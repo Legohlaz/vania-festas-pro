@@ -3,6 +3,7 @@
 import {
   ChangeEvent,
   FormEvent,
+  useEffect,
   useState,
 } from "react";
 import Link from "next/link";
@@ -12,7 +13,9 @@ import {
   ArrowLeft,
   ImagePlus,
   PackagePlus,
+  Plus,
   Save,
+  Trash2,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
@@ -20,6 +23,15 @@ import {
   EVENT_TYPES,
   PRODUCT_CATEGORIES,
 } from "@/lib/catalog-options";
+
+type KitSourceProduct = {
+  id: number;
+  name: string;
+  stock_quantity: number | null;
+  maintenance_status: string | null;
+};
+
+type KitItemDraft = { productId: string; quantity: string };
 
 export default function NovoProdutoPage() {
   const router = useRouter();
@@ -36,6 +48,11 @@ export default function NovoProdutoPage() {
 
   const [price, setPrice] = useState("");
   const [stockQuantity, setStockQuantity] = useState("1");
+  const [maintenanceStatus, setMaintenanceStatus] = useState("disponivel");
+  const [maintenanceNotes, setMaintenanceNotes] = useState("");
+  const [isKit, setIsKit] = useState(false);
+  const [kitItems, setKitItems] = useState<KitItemDraft[]>([]);
+  const [kitSourceProducts, setKitSourceProducts] = useState<KitSourceProduct[]>([]);
 
   const [featured, setFeatured] = useState(false);
   const [active, setActive] = useState(true);
@@ -52,6 +69,32 @@ export default function NovoProdutoPage() {
 
   const [errorMessage, setErrorMessage] =
     useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadKitSourceProducts() {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, stock_quantity, maintenance_status")
+        .order("name");
+
+      if (!error) setKitSourceProducts((data ?? []) as KitSourceProduct[]);
+    }
+
+    loadKitSourceProducts();
+  }, []);
+
+  function addKitItem() {
+    setKitItems((current) => [...current, { productId: "", quantity: "1" }]);
+  }
+
+  function updateKitItem(index: number, field: keyof KitItemDraft, value: string) {
+    setKitItems((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item));
+  }
+
+  function removeKitItem(index: number) {
+    setKitItems((current) => current.filter((_, itemIndex) => itemIndex !== index));
+  }
 
   function createSlug(value: string) {
     return value
@@ -153,6 +196,20 @@ export default function NovoProdutoPage() {
       return;
     }
 
+    const normalizedKitItems = kitItems
+      .map((item) => ({ product_id: Number(item.productId), quantity: Number(item.quantity) }))
+      .filter((item) => Number.isInteger(item.product_id) && item.product_id > 0 && Number.isInteger(item.quantity) && item.quantity > 0);
+
+    if (isKit && (normalizedKitItems.length === 0 || normalizedKitItems.length !== kitItems.length)) {
+      setErrorMessage("Adicione ao menos um item válido para a composição do kit.");
+      return;
+    }
+
+    if (new Set(normalizedKitItems.map((item) => item.product_id)).size !== normalizedKitItems.length) {
+      setErrorMessage("Cada produto pode aparecer apenas uma vez na composição.");
+      return;
+    }
+
     setSaving(true);
     setErrorMessage(null);
 
@@ -241,6 +298,9 @@ export default function NovoProdutoPage() {
 
             price: numericPrice,
             stock_quantity: numericStockQuantity,
+            maintenance_status: maintenanceStatus,
+            maintenance_notes: maintenanceNotes.trim() || null,
+            is_kit: isKit,
             image_url: imageUrl,
             featured,
             active,
@@ -256,6 +316,16 @@ export default function NovoProdutoPage() {
 
       if (!createdProduct) {
         throw new Error("Produto criado, mas não foi possível identificar a galeria.");
+      }
+
+      if (isKit) {
+        const { error: kitItemsError } = await supabase
+          .from("product_kit_items")
+          .insert(normalizedKitItems.map((item) => ({ ...item, kit_product_id: Number(createdProduct.id) })));
+
+        if (kitItemsError) {
+          throw new Error(`Produto criado, mas não foi possível salvar a composição: ${kitItemsError.message}`);
+        }
       }
 
       if (additionalImageFiles.length > 0) {
@@ -642,6 +712,104 @@ export default function NovoProdutoPage() {
               Informe quantas unidades deste produto estão disponíveis no acervo.
             </p>
           </div>
+
+          <div className="grid gap-5 md:grid-cols-2" style={{ marginTop: "28px" }}>
+            <div>
+              <label htmlFor="maintenanceStatus" className="text-sm font-bold text-gray-800">
+                Situação operacional
+              </label>
+              <select
+                id="maintenanceStatus"
+                value={maintenanceStatus}
+                onChange={(event) => setMaintenanceStatus(event.target.value)}
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-700"
+                style={{ marginTop: "10px" }}
+              >
+                <option value="disponivel">Disponível para locação</option>
+                <option value="limpeza">Em limpeza</option>
+                <option value="manutencao">Em manutenção</option>
+                <option value="avariado">Avariado / indisponível</option>
+              </select>
+              <p className="text-xs text-gray-500" style={{ marginTop: "8px" }}>
+                Itens fora de disponibilidade não podem entrar em novas reservas.
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="maintenanceNotes" className="text-sm font-bold text-gray-800">
+                Observação interna
+              </label>
+              <input
+                id="maintenanceNotes"
+                value={maintenanceNotes}
+                onChange={(event) => setMaintenanceNotes(event.target.value)}
+                placeholder="Ex.: revisar acabamento antes de liberar"
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-700"
+                style={{ marginTop: "10px" }}
+              />
+            </div>
+          </div>
+
+          <section className="rounded-2xl border border-violet-200 bg-violet-50/60 p-5" style={{ marginTop: "28px" }}>
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={isKit}
+                onChange={(event) => {
+                  setIsKit(event.target.checked);
+                  if (event.target.checked && kitItems.length === 0) addKitItem();
+                }}
+                className="mt-1 h-4 w-4 accent-emerald-700"
+              />
+              <span>
+                <span className="block text-sm font-bold text-gray-900">Este produto é um kit ou composição</span>
+                <span className="mt-1 block text-xs text-gray-600">Informe os itens que fazem parte dele para facilitar a separação do evento.</span>
+              </span>
+            </label>
+
+            {isKit && (
+              <div className="mt-5 border-t border-violet-200 pt-5">
+                <p className="text-sm font-bold text-gray-800">Itens da composição</p>
+                <p className="mt-1 text-xs text-gray-600">O estoque acima continua sendo o controle de disponibilidade do kit; esta lista serve para organização e conferência.</p>
+
+                <div className="mt-4 space-y-3">
+                  {kitItems.map((item, index) => (
+                    <div key={index} className="grid gap-3 sm:grid-cols-[1fr_130px_auto]">
+                      <select
+                        value={item.productId}
+                        onChange={(event) => updateKitItem(index, "productId", event.target.value)}
+                        className="rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-emerald-700"
+                      >
+                        <option value="">Selecione um produto</option>
+                        {kitSourceProducts
+                          .filter((product) => product.maintenance_status === "disponivel")
+                          .map((product) => (
+                            <option key={product.id} value={product.id}>
+                              {product.name} ({product.stock_quantity ?? 0} em estoque)
+                            </option>
+                          ))}
+                      </select>
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(event) => updateKitItem(index, "quantity", event.target.value)}
+                        placeholder="Qtd."
+                        className="rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-emerald-700"
+                      />
+                      <button type="button" onClick={() => removeKitItem(index)} className="inline-flex items-center justify-center rounded-xl border border-red-200 bg-white px-3 text-red-600 transition hover:bg-red-50" aria-label="Remover item do kit">
+                        <Trash2 size={17} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <button type="button" onClick={addKitItem} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-emerald-700 px-4 py-2 text-sm font-bold text-emerald-800 transition hover:bg-emerald-50">
+                  <Plus size={16} /> Adicionar item ao kit
+                </button>
+              </div>
+            )}
+          </section>
 
           {/* Imagem */}
           <div

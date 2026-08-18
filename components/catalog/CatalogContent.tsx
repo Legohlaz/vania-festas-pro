@@ -513,7 +513,8 @@ export function CatalogContent() {
                 active
               `
             )
-            .eq("active", true);
+            .eq("active", true)
+            .eq("maintenance_status", "disponivel");
 
         if (error) {
           throw error;

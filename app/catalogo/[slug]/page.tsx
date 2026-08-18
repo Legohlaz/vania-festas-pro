@@ -169,6 +169,7 @@ export default function ProdutoDetalhesPage() {
             )
             .eq("slug", slug)
             .eq("active", true)
+            .eq("maintenance_status", "disponivel")
             .maybeSingle();
 
         if (error) {

@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
   if (adminError || !isAdmin) return json({ error: "Esta conta não possui acesso administrativo." }, { status: 403 });
 
   const [{ data: products, error: productsError }, { data: availability, error: availabilityError }] = await Promise.all([
-    supabase.from("products").select("id, name, slug, description, category, event_type, search_keywords, price, image_url, stock_quantity").eq("active", true).order("name"),
+    supabase.from("products").select("id, name, slug, description, category, event_type, search_keywords, price, image_url, stock_quantity").eq("active", true).eq("maintenance_status", "disponivel").order("name"),
     supabase.rpc("get_product_availability", { p_event_date: eventDate }),
   ]);
   if (productsError || availabilityError) return json({ error: productsError?.message ?? availabilityError?.message ?? "Não foi possível consultar o catálogo." }, { status: 500 });

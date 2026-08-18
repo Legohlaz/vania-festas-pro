@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   ImagePlus,
   Package,
+  Plus,
   Save,
   Trash2,
 } from "lucide-react";
@@ -36,6 +37,9 @@ type Product = {
   image_url: string | null;
   featured: boolean;
   active: boolean;
+  maintenance_status: string | null;
+  maintenance_notes: string | null;
+  is_kit: boolean | null;
 };
 
 type ProductImage = {
@@ -43,6 +47,15 @@ type ProductImage = {
   image_url: string;
   position: number;
 };
+
+type KitSourceProduct = {
+  id: number;
+  name: string;
+  stock_quantity: number | null;
+  maintenance_status: string | null;
+};
+
+type KitItemDraft = { productId: string; quantity: string };
 
 export default function EditarProdutoPage() {
   const router = useRouter();
@@ -62,6 +75,11 @@ export default function EditarProdutoPage() {
 
   const [price, setPrice] = useState("");
   const [stockQuantity, setStockQuantity] = useState("1");
+  const [maintenanceStatus, setMaintenanceStatus] = useState("disponivel");
+  const [maintenanceNotes, setMaintenanceNotes] = useState("");
+  const [isKit, setIsKit] = useState(false);
+  const [kitItems, setKitItems] = useState<KitItemDraft[]>([]);
+  const [kitSourceProducts, setKitSourceProducts] = useState<KitSourceProduct[]>([]);
 
   const [featured, setFeatured] = useState(false);
   const [active, setActive] = useState(true);
@@ -84,6 +102,18 @@ export default function EditarProdutoPage() {
 
   const [errorMessage, setErrorMessage] =
     useState<string | null>(null);
+
+  function addKitItem() {
+    setKitItems((current) => [...current, { productId: "", quantity: "1" }]);
+  }
+
+  function updateKitItem(index: number, field: keyof KitItemDraft, value: string) {
+    setKitItems((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: value } : item));
+  }
+
+  function removeKitItem(index: number) {
+    setKitItems((current) => current.filter((_, itemIndex) => itemIndex !== index));
+  }
 
   function createSlug(value: string) {
     return value
@@ -137,6 +167,20 @@ export default function EditarProdutoPage() {
   }
 
   useEffect(() => {
+    async function loadKitSourceProducts() {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, stock_quantity, maintenance_status")
+        .order("name");
+
+      if (!error) setKitSourceProducts((data ?? []) as KitSourceProduct[]);
+    }
+
+    loadKitSourceProducts();
+  }, []);
+
+  useEffect(() => {
     if (!id) {
       return;
     }
@@ -163,7 +207,10 @@ export default function EditarProdutoPage() {
               stock_quantity,
               image_url,
               featured,
-              active
+              active,
+              maintenance_status,
+              maintenance_notes,
+              is_kit
             `
           )
           .eq("id", id)
@@ -208,6 +255,9 @@ export default function EditarProdutoPage() {
 
         setFeatured(Boolean(product.featured));
         setActive(Boolean(product.active));
+        setMaintenanceStatus(product.maintenance_status ?? "disponivel");
+        setMaintenanceNotes(product.maintenance_notes ?? "");
+        setIsKit(Boolean(product.is_kit));
 
         setCurrentImageUrl(product.image_url ?? null);
         setImagePreview(product.image_url ?? null);
@@ -220,6 +270,15 @@ export default function EditarProdutoPage() {
 
         if (galleryError) throw new Error(`Erro ao carregar galeria: ${galleryError.message}`);
         setGalleryImages((galleryData ?? []) as ProductImage[]);
+
+        const { data: kitData, error: kitError } = await supabase
+          .from("product_kit_items")
+          .select("product_id, quantity")
+          .eq("kit_product_id", product.id)
+          .order("id");
+
+        if (kitError) throw new Error(`Erro ao carregar composição: ${kitError.message}`);
+        setKitItems((kitData ?? []).map((item) => ({ productId: String(item.product_id), quantity: String(item.quantity) })));
       } catch (error) {
         console.error(
           "ERRO AO CARREGAR PRODUTO:",
@@ -334,6 +393,20 @@ export default function EditarProdutoPage() {
       return;
     }
 
+    const normalizedKitItems = kitItems
+      .map((item) => ({ product_id: Number(item.productId), quantity: Number(item.quantity) }))
+      .filter((item) => Number.isInteger(item.product_id) && item.product_id > 0 && Number.isInteger(item.quantity) && item.quantity > 0);
+
+    if (isKit && (normalizedKitItems.length === 0 || normalizedKitItems.length !== kitItems.length)) {
+      setErrorMessage("Informe um produto e uma quantidade válida para cada item do kit.");
+      return;
+    }
+
+    if (new Set(normalizedKitItems.map((item) => item.product_id)).size !== normalizedKitItems.length) {
+      setErrorMessage("Cada produto pode aparecer apenas uma vez na composição do kit.");
+      return;
+    }
+
     setSaving(true);
     setErrorMessage(null);
 
@@ -418,6 +491,9 @@ export default function EditarProdutoPage() {
             image_url: imageUrl,
             featured,
             active,
+            maintenance_status: maintenanceStatus,
+            maintenance_notes: maintenanceNotes.trim() || null,
+            is_kit: isKit,
           })
           .eq("id", id);
 
@@ -442,6 +518,25 @@ export default function EditarProdutoPage() {
         throw new Error(
           `Erro ao atualizar produto: ${updateError.message}`
         );
+      }
+
+      const { error: deleteKitItemsError } = await supabase
+        .from("product_kit_items")
+        .delete()
+        .eq("kit_product_id", id);
+
+      if (deleteKitItemsError) {
+        throw new Error(`Produto atualizado, mas não foi possível atualizar a composição: ${deleteKitItemsError.message}`);
+      }
+
+      if (isKit) {
+        const { error: insertKitItemsError } = await supabase
+          .from("product_kit_items")
+          .insert(normalizedKitItems.map((item) => ({ ...item, kit_product_id: Number(id) })));
+
+        if (insertKitItemsError) {
+          throw new Error(`Produto atualizado, mas não foi possível salvar a composição: ${insertKitItemsError.message}`);
+        }
       }
 
       if (additionalImageFiles.length > 0) {
@@ -927,6 +1022,50 @@ export default function EditarProdutoPage() {
               Informe quantas unidades deste produto estão disponíveis no acervo.
             </p>
           </div>
+
+          <div className="grid gap-5 md:grid-cols-2" style={{ marginTop: "28px" }}>
+            <div>
+              <label htmlFor="maintenanceStatus" className="text-sm font-bold text-gray-800">Situação operacional</label>
+              <select id="maintenanceStatus" value={maintenanceStatus} onChange={(event) => setMaintenanceStatus(event.target.value)} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-700" style={{ marginTop: "10px" }}>
+                <option value="disponivel">Disponível para locação</option>
+                <option value="limpeza">Em limpeza</option>
+                <option value="manutencao">Em manutenção</option>
+                <option value="avariado">Avariado / indisponível</option>
+              </select>
+              <p className="text-xs text-gray-500" style={{ marginTop: "8px" }}>Itens fora de disponibilidade não podem entrar em novas reservas.</p>
+            </div>
+            <div>
+              <label htmlFor="maintenanceNotes" className="text-sm font-bold text-gray-800">Observação interna</label>
+              <input id="maintenanceNotes" value={maintenanceNotes} onChange={(event) => setMaintenanceNotes(event.target.value)} placeholder="Ex.: revisar acabamento antes de liberar" className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-700" style={{ marginTop: "10px" }} />
+            </div>
+          </div>
+
+          <section className="rounded-2xl border border-violet-200 bg-violet-50/60 p-5" style={{ marginTop: "28px" }}>
+            <label className="flex cursor-pointer items-start gap-3">
+              <input type="checkbox" checked={isKit} onChange={(event) => { setIsKit(event.target.checked); if (event.target.checked && kitItems.length === 0) addKitItem(); }} className="mt-1 h-4 w-4 accent-emerald-700" />
+              <span><span className="block text-sm font-bold text-gray-900">Este produto é um kit ou composição</span><span className="mt-1 block text-xs text-gray-600">Informe os itens incluídos para facilitar a separação do evento.</span></span>
+            </label>
+
+            {isKit && (
+              <div className="mt-5 border-t border-violet-200 pt-5">
+                <p className="text-sm font-bold text-gray-800">Itens da composição</p>
+                <p className="mt-1 text-xs text-gray-600">O estoque do kit é controlado separadamente pela quantidade informada acima.</p>
+                <div className="mt-4 space-y-3">
+                  {kitItems.map((item, index) => (
+                    <div key={index} className="grid gap-3 sm:grid-cols-[1fr_130px_auto]">
+                      <select value={item.productId} onChange={(event) => updateKitItem(index, "productId", event.target.value)} className="rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-emerald-700">
+                        <option value="">Selecione um produto</option>
+                        {kitSourceProducts.filter((product) => String(product.id) !== String(id) && product.maintenance_status === "disponivel").map((product) => <option key={product.id} value={product.id}>{product.name} ({product.stock_quantity ?? 0} em estoque)</option>)}
+                      </select>
+                      <input type="number" min="1" value={item.quantity} onChange={(event) => updateKitItem(index, "quantity", event.target.value)} placeholder="Qtd." className="rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm outline-none focus:border-emerald-700" />
+                      <button type="button" onClick={() => removeKitItem(index)} className="inline-flex items-center justify-center rounded-xl border border-red-200 bg-white px-3 text-red-600 transition hover:bg-red-50" aria-label="Remover item do kit"><Trash2 size={17} /></button>
+                    </div>
+                  ))}
+                </div>
+                <button type="button" onClick={addKitItem} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-emerald-700 px-4 py-2 text-sm font-bold text-emerald-800 transition hover:bg-emerald-50"><Plus size={16} /> Adicionar item ao kit</button>
+              </div>
+            )}
+          </section>
 
           {/* Imagem */}
           <div style={{ marginTop: "32px" }}>

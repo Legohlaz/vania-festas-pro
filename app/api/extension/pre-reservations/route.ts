@@ -46,6 +46,22 @@ export async function POST(request: NextRequest) {
   if (userError || !userData.user) return json({ error: "Sua sessão expirou. Entre novamente." }, { status: 401 });
   if (adminError || !isAdmin) return json({ error: "Esta conta não possui acesso administrativo." }, { status: 403 });
 
+  const productIds = [...new Set(items.map((item) => item.productId))];
+  const { data: selectedProducts, error: selectedProductsError } = await supabase
+    .from("products")
+    .select("id, active, maintenance_status")
+    .in("id", productIds);
+  if (selectedProductsError) return json({ error: selectedProductsError.message }, { status: 500 });
+
+  const selectableProductIds = new Set(
+    (selectedProducts ?? [])
+      .filter((product) => product.active === true && product.maintenance_status === "disponivel")
+      .map((product) => Number(product.id))
+  );
+  if (selectableProductIds.size !== productIds.length || productIds.some((productId) => !selectableProductIds.has(productId))) {
+    return json({ error: "Um dos produtos não está disponível para novas reservas neste momento." }, { status: 409 });
+  }
+
   const { data: availability, error: availabilityError } = await supabase.rpc("get_product_availability", { p_event_date: eventDate });
   if (availabilityError) return json({ error: availabilityError.message }, { status: 500 });
   const availabilityByProduct = new Map(((availability ?? []) as Availability[]).map((item) => [item.product_id, Number(item.available_quantity ?? 0)]));

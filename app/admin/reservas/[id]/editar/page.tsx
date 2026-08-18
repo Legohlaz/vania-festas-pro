@@ -81,7 +81,7 @@ export default function EditarReservaPage() {
             .select("product_id, quantity, unit_price")
             .eq("reservation_id", reservationId),
           supabase.from("customers").select("id,name,phone").order("name"),
-          supabase.from("products").select("id,name,price,stock_quantity").eq("active", true).order("name"),
+          supabase.from("products").select("id,name,price,stock_quantity").eq("active", true).eq("maintenance_status", "disponivel").order("name"),
         ]);
 
       if (reservationsResult.error || itemsResult.error) {

@@ -25,6 +25,9 @@ type Product = {
   stock_quantity: number | null;
   image_url: string | null;
   active: boolean | null;
+  maintenance_status: string | null;
+  maintenance_notes: string | null;
+  is_kit: boolean | null;
 };
 
 type StatusFilter = "todos" | "ativos" | "inativos";
@@ -39,11 +42,17 @@ type ProductCopySource = {
   event_type: string[] | null;
   price: number | null;
   image_url: string | null;
+  is_kit: boolean | null;
 };
 
 type ProductImage = {
   image_url: string;
   position: number;
+};
+
+type ProductKitItem = {
+  product_id: number;
+  quantity: number;
 };
 
 function formatPrice(price: number | null) {
@@ -63,6 +72,19 @@ function normalizeText(value: string) {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
+}
+
+function getOperationalStatus(status: string | null) {
+  switch (status) {
+    case "limpeza":
+      return { label: "Em limpeza", className: "bg-sky-50 text-sky-800" };
+    case "manutencao":
+      return { label: "Em manutenção", className: "bg-amber-50 text-amber-800" };
+    case "avariado":
+      return { label: "Avariado", className: "bg-red-50 text-red-700" };
+    default:
+      return { label: "Disponível", className: "bg-emerald-50 text-emerald-800" };
+  }
 }
 
 export default function ProdutosPage() {
@@ -93,7 +115,7 @@ export default function ProdutosPage() {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, name, category, price, stock_quantity, image_url, active"
+          "id, name, category, price, stock_quantity, image_url, active, maintenance_status, maintenance_notes, is_kit"
         )
         .order("created_at", {
           ascending: false,
@@ -247,7 +269,7 @@ export default function ProdutosPage() {
       const { data: sourceData, error: sourceError } = await supabase
         .from("products")
         .select(
-          "id, name, slug, description, search_keywords, category, event_type, price, image_url"
+          "id, name, slug, description, search_keywords, category, event_type, price, image_url, is_kit"
         )
         .eq("id", product.id)
         .single();
@@ -269,6 +291,18 @@ export default function ProdutosPage() {
       if (galleryError) {
         throw new Error(
           `Não foi possível carregar as fotos do produto: ${galleryError.message}`
+        );
+      }
+
+      const { data: sourceKitItems, error: kitItemsError } = await supabase
+        .from("product_kit_items")
+        .select("product_id, quantity")
+        .eq("kit_product_id", source.id)
+        .order("id");
+
+      if (kitItemsError) {
+        throw new Error(
+          `Não foi possível carregar a composição do kit: ${kitItemsError.message}`
         );
       }
 
@@ -336,6 +370,9 @@ export default function ProdutosPage() {
           image_url: copiedPrimaryImage,
           featured: false,
           active: false,
+          maintenance_status: "disponivel",
+          maintenance_notes: null,
+          is_kit: Boolean(source.is_kit),
         })
         .select("id")
         .single();
@@ -347,6 +384,24 @@ export default function ProdutosPage() {
       }
 
       createdProductId = String(createdProduct.id);
+
+      if (source.is_kit && (sourceKitItems ?? []).length > 0) {
+        const { error: kitInsertError } = await supabase
+          .from("product_kit_items")
+          .insert(
+            (sourceKitItems as ProductKitItem[]).map((item) => ({
+              kit_product_id: createdProduct.id,
+              product_id: item.product_id,
+              quantity: item.quantity,
+            }))
+          );
+
+        if (kitInsertError) {
+          throw new Error(
+            `A cópia foi criada, mas não foi possível salvar a composição: ${kitInsertError.message}`
+          );
+        }
+      }
 
       if (copiedGallery.length > 0) {
         const { error: galleryInsertError } = await supabase
@@ -798,6 +853,9 @@ export default function ProdutosPage() {
                     {filteredProducts.map(
                       (product) => {
                         const quantity = product.stock_quantity ?? 0;
+                        const operationalStatus = getOperationalStatus(
+                          product.maintenance_status
+                        );
                         const stockLabel =
                           quantity <= 0
                             ? "Sem estoque"
@@ -879,6 +937,17 @@ export default function ProdutosPage() {
                               <span className="text-sm font-semibold text-gray-500">
                                 {quantity} {quantity === 1 ? "unidade" : "unidades"}
                               </span>
+                              <span
+                                className={`rounded-full px-2.5 py-1 text-xs font-bold ${operationalStatus.className}`}
+                                title={product.maintenance_notes ?? undefined}
+                              >
+                                {operationalStatus.label}
+                              </span>
+                              {product.is_kit && (
+                                <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-800">
+                                  Kit / composição
+                                </span>
+                              )}
                             </div>
                           </div>
 
