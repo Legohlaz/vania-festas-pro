@@ -5,10 +5,13 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   ArrowLeft,
+  CheckCircle2,
+  CircleOff,
   Package,
   Plus,
   Search,
   SlidersHorizontal,
+  TriangleAlert,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
@@ -151,6 +154,31 @@ export default function ProdutosPage() {
     search.trim().length > 0 ||
     categoryFilter !== "todas" ||
     statusFilter !== "todos";
+
+  const stockSummary = useMemo(() => {
+    const active = products.filter(
+      (product) => product.active === true
+    ).length;
+
+    const inactive = products.length - active;
+
+    const outOfStock = products.filter(
+      (product) => (product.stock_quantity ?? 0) <= 0
+    ).length;
+
+    const lowStock = products.filter((product) => {
+      const quantity = product.stock_quantity ?? 0;
+
+      return quantity > 0 && quantity <= 5;
+    }).length;
+
+    return {
+      active,
+      inactive,
+      outOfStock,
+      lowStock,
+    };
+  }, [products]);
 
   function clearFilters() {
     setSearch("");
@@ -317,6 +345,60 @@ export default function ProdutosPage() {
               {errorMessage}
             </div>
           )}
+
+          {/* Visão rápida do catálogo */}
+          {!loading &&
+            !errorMessage &&
+            products.length > 0 && (
+              <section
+                aria-label="Resumo do catálogo"
+                className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+                style={{ marginBottom: "20px" }}
+              >
+                <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                  <Package size={20} className="text-violet-600" />
+                  <p className="mt-4 text-sm font-semibold text-gray-500">
+                    Produtos cadastrados
+                  </p>
+                  <p className="mt-1 text-3xl font-black text-gray-900">
+                    {products.length}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm">
+                  <CheckCircle2 size={20} className="text-emerald-700" />
+                  <p className="mt-4 text-sm font-semibold text-emerald-800">
+                    Ativos no catálogo
+                  </p>
+                  <p className="mt-1 text-3xl font-black text-emerald-900">
+                    {stockSummary.active}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 shadow-sm">
+                  <CircleOff size={20} className="text-gray-600" />
+                  <p className="mt-4 text-sm font-semibold text-gray-600">
+                    Inativos
+                  </p>
+                  <p className="mt-1 text-3xl font-black text-gray-900">
+                    {stockSummary.inactive}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+                  <TriangleAlert size={20} className="text-amber-700" />
+                  <p className="mt-4 text-sm font-semibold text-amber-900">
+                    Atenção ao estoque
+                  </p>
+                  <p className="mt-1 text-3xl font-black text-amber-950">
+                    {stockSummary.outOfStock + stockSummary.lowStock}
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-amber-800">
+                    {stockSummary.outOfStock} sem estoque · {stockSummary.lowStock} baixo
+                  </p>
+                </div>
+              </section>
+            )}
 
           {/* Nenhum produto cadastrado */}
           {!loading &&
@@ -507,7 +589,23 @@ export default function ProdutosPage() {
                     }}
                   >
                     {filteredProducts.map(
-                      (product) => (
+                      (product) => {
+                        const quantity = product.stock_quantity ?? 0;
+                        const stockLabel =
+                          quantity <= 0
+                            ? "Sem estoque"
+                            : quantity <= 5
+                              ? "Estoque baixo"
+                              : "Estoque disponível";
+
+                        const stockClassName =
+                          quantity <= 0
+                            ? "bg-red-50 text-red-700"
+                            : quantity <= 5
+                              ? "bg-amber-50 text-amber-800"
+                              : "bg-emerald-50 text-emerald-800";
+
+                        return (
                         <div
                           key={product.id}
                           className="flex flex-col gap-5 rounded-2xl border border-gray-200 bg-white shadow-sm md:flex-row md:items-center"
@@ -562,20 +660,19 @@ export default function ProdutosPage() {
                               )}
                             </p>
 
-                            <p
-                              className="text-sm font-semibold text-gray-500"
-                              style={{
-                                marginTop: "6px",
-                              }}
+                            <div
+                              className="flex flex-wrap items-center gap-2"
+                              style={{ marginTop: "10px" }}
                             >
-                              Estoque:{" "}
-                              <span className="font-bold text-gray-700">
-                                {product.stock_quantity ?? 0}{" "}
-                                {(product.stock_quantity ?? 0) === 1
-                                  ? "unidade"
-                                  : "unidades"}
+                              <span
+                                className={`rounded-full px-2.5 py-1 text-xs font-bold ${stockClassName}`}
+                              >
+                                {stockLabel}
                               </span>
-                            </p>
+                              <span className="text-sm font-semibold text-gray-500">
+                                {quantity} {quantity === 1 ? "unidade" : "unidades"}
+                              </span>
+                            </div>
                           </div>
 
                           {/* Status */}
@@ -641,7 +738,8 @@ export default function ProdutosPage() {
                             </Link>
                           </div>
                         </div>
-                      )
+                        );
+                      }
                     )}
                   </div>
                 )}
