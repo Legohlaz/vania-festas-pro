@@ -10,6 +10,7 @@ import {
   CopyPlus,
   Package,
   Plus,
+  QrCode,
   Search,
   SlidersHorizontal,
   TriangleAlert,
@@ -1026,6 +1027,14 @@ export default function ProdutosPage() {
                                 ? "Duplicando..."
                                 : "Duplicar"}
                             </button>
+
+                            <Link
+                              href={`/admin/produtos/${product.id}/editar#qr-code`}
+                              className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-800 transition hover:bg-emerald-50"
+                            >
+                              <QrCode size={16} />
+                              Etiqueta QR
+                            </Link>
 
                             <Link
                               href={`/admin/produtos/${product.id}/editar`}

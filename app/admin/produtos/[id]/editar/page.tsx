@@ -18,6 +18,7 @@ import {
   Trash2,
 } from "lucide-react";
 
+import ProductQrCodeCard from "@/components/admin/ProductQrCodeCard";
 import { createClient } from "@/lib/supabase/client";
 import {
   EVENT_TYPES,
@@ -804,6 +805,14 @@ export default function EditarProdutoPage() {
             padding: "32px",
           }}
         >
+          {id && name && slug && (
+            <ProductQrCodeCard
+              productId={id}
+              productName={name}
+              productSlug={slug}
+            />
+          )}
+
           {/* Nome + Slug */}
           <div className="grid gap-6 md:grid-cols-2">
             <div>
