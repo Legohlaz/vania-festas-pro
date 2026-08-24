@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import ProductQrCodeCard from "@/components/admin/ProductQrCodeCard";
+import { ProductRentalHistory } from "@/components/admin/ProductRentalHistory";
 import { createClient } from "@/lib/supabase/client";
 import {
   EVENT_TYPES,
@@ -812,6 +813,7 @@ export default function EditarProdutoPage() {
               productSlug={slug}
             />
           )}
+          {id && <ProductRentalHistory productId={id} />}
 
           {/* Nome + Slug */}
           <div className="grid gap-6 md:grid-cols-2">

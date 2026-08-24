@@ -10,6 +10,7 @@ import {
   MessageCircle,
   PackageCheck,
   Search,
+  QrCode,
   Truck,
   Undo2,
 } from "lucide-react";
@@ -299,6 +300,11 @@ export default function LogisticaPage() {
                           {column.status === "delivered" && (
                             <Link href={`/admin/reservas/${reservation.id}`} className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 text-xs font-bold text-violet-800 transition hover:bg-violet-100">
                               <ClipboardList className="h-4 w-4" /> Conferir devolução
+                            </Link>
+                          )}
+                          {column.status !== "returned" && (
+                            <Link href={`/admin/reservas/${reservation.id}`} className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 text-xs font-bold text-sky-800 transition hover:bg-sky-100">
+                              <QrCode className="h-4 w-4" /> Conferir por QR Code
                             </Link>
                           )}
                         </article>

@@ -11,6 +11,7 @@ import { ReservationActions } from "@/components/admin/ReservationActions";
 import { ReservationLogisticsChecklist } from "@/components/admin/ReservationLogisticsChecklist";
 import { ReservationPayments } from "@/components/admin/ReservationPayments";
 import { ReservationReturnCheck } from "@/components/admin/ReservationReturnCheck";
+import { ReservationQrScanner } from "@/components/admin/ReservationQrScanner";
 import { createClient } from "@/lib/supabase/client";
 
 type Reservation = {
@@ -32,6 +33,7 @@ type ReservationItem = {
   product_name: string | null;
   quantity: number | null;
   unit_price: number | null;
+  product_slug: string | null;
 };
 
 type ReservationItemRow = {
@@ -111,15 +113,18 @@ export default function ReservationDetailsPage() {
         const itemRows = (itemsResult.data ?? []) as ReservationItemRow[];
         const productIds = [...new Set(itemRows.map((item) => item.product_id).filter((productId): productId is number => productId !== null))];
         const productsResult = productIds.length
-          ? await supabase.from("products").select("id, name").in("id", productIds)
+          ? await supabase.from("products").select("id, name, slug").in("id", productIds)
           : { data: [], error: null };
 
         if (productsResult.error) {
           setErrorMessage(productsResult.error.message);
         } else {
-          const productNames = new Map((productsResult.data ?? []).map((product) => [product.id, product.name]));
+          const productsById = new Map((productsResult.data ?? []).map((product) => [product.id, product]));
           setReservation(reservationData);
-          setItems(itemRows.map((item) => ({ ...item, product_name: item.product_id ? productNames.get(item.product_id) ?? null : null })));
+          setItems(itemRows.map((item) => {
+            const product = item.product_id ? productsById.get(item.product_id) : null;
+            return { ...item, product_name: product?.name ?? null, product_slug: product?.slug ?? null };
+          }));
           setEventAddress(reservationData.event_address ?? null);
         }
       }
@@ -245,6 +250,13 @@ export default function ReservationDetailsPage() {
                   ))}
                 </div>
               </section>
+            )}
+            {reservation.status !== "cancelled" && (
+              <ReservationQrScanner
+                reservationId={reservation.id}
+                initialStage={logisticsStatus === "scheduled" ? "preparing" : logisticsStatus === "preparing" ? "delivered" : "returned"}
+                items={items.filter((item): item is ReservationItem & { product_id: number; product_name: string } => item.product_id !== null && item.product_name !== null).map((item) => ({ id: item.id, product_id: item.product_id, product_name: item.product_name, product_slug: item.product_slug, quantity: Number(item.quantity ?? 0) }))}
+              />
             )}
             {reservation.status !== "cancelled" && <ReservationLogisticsChecklist reservationId={reservation.id} />}
             {reservation.status !== "cancelled" && (logisticsStatus === "delivered" || logisticsStatus === "returned") && <ReservationReturnCheck reservationId={reservation.id} logisticsStatus={logisticsStatus} onFinished={() => setReservation((current) => current ? { ...current, logistics_status: "returned" } : current)} />}

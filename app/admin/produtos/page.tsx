@@ -554,13 +554,18 @@ export default function ProdutosPage() {
             </p>
           </div>
 
-          <Link
-            href="/admin/produtos/novo"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-800 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-900"
-          >
-            <Plus size={18} />
-            Novo produto
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/admin/produtos/etiquetas" className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-700 px-5 py-3 text-sm font-bold text-emerald-800 transition hover:bg-emerald-50">
+              <QrCode size={18} /> Etiquetas QR
+            </Link>
+            <Link
+              href="/admin/produtos/novo"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-800 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-900"
+            >
+              <Plus size={18} />
+              Novo produto
+            </Link>
+          </div>
         </div>
 
         {/* Conteúdo */}

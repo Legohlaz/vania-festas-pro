@@ -21,11 +21,12 @@ type ReservationAlert = {
   event_date: string;
   service_fee: number | null;
   amount_paid: number | null;
+  logistics_status: string | null;
   reservation_items: { quantity: number | null; unit_price: number | null }[] | null;
 };
 
 type AttentionNotification = StoredNotification & {
-  kind?: "event" | "balance" | "stock" | "maintenance";
+  kind?: "event" | "balance" | "stock" | "maintenance" | "logistics";
 };
 
 type ProductAlert = {
@@ -80,14 +81,14 @@ export default function NotificationsPage() {
         .limit(50),
       supabase
         .from("reservations")
-        .select("id,customer_name,event_date,service_fee,amount_paid,reservation_items(quantity,unit_price)")
+        .select("id,customer_name,event_date,service_fee,amount_paid,logistics_status,reservation_items(quantity,unit_price)")
         .in("status", ["pending", "confirmed"])
         .gte("event_date", dateKey(today))
         .lte("event_date", dateKey(inThreeDays))
         .order("event_date", { ascending: true }),
       supabase
         .from("reservations")
-        .select("id,customer_name,event_date,service_fee,amount_paid,reservation_items(quantity,unit_price)")
+        .select("id,customer_name,event_date,service_fee,amount_paid,logistics_status,reservation_items(quantity,unit_price)")
         .in("status", ["pending", "confirmed"])
         .gte("event_date", dateKey(today))
         .lte("event_date", dateKey(inThirtyDays))
@@ -116,6 +117,18 @@ export default function NotificationsPage() {
       created_at: `${reservation.event_date}T12:00:00`,
       kind: "event",
     }));
+    const logisticsAlerts: AttentionNotification[] = ((eventsResult.data ?? []) as ReservationAlert[])
+      .filter((reservation) => (reservation.logistics_status ?? "scheduled") === "scheduled")
+      .map((reservation) => ({
+        id: -(500_000 + reservation.id),
+        type: "reservation_pending",
+        title: `Preparação pendente: reserva #${reservation.id}`,
+        message: `O evento de ${reservation.customer_name ?? "Cliente"} está próximo. Inicie a separação e confira os itens por QR Code.`,
+        href: `/admin/reservas/${reservation.id}`,
+        read_at: null,
+        created_at: `${reservation.event_date}T12:00:00`,
+        kind: "logistics",
+      }));
     const balanceAlerts: AttentionNotification[] = ((balancesResult.data ?? []) as ReservationAlert[])
       .filter((reservation) => reservationBalance(reservation) > 0.009)
       .map((reservation) => ({
@@ -154,7 +167,7 @@ export default function NotificationsPage() {
       }));
 
     setNotifications((storedResult.data ?? []) as StoredNotification[]);
-    setAttention([...eventAlerts, ...balanceAlerts, ...stockAlerts, ...maintenanceAlerts]);
+    setAttention([...logisticsAlerts, ...eventAlerts, ...balanceAlerts, ...stockAlerts, ...maintenanceAlerts]);
     setLoading(false);
   }
 
@@ -210,8 +223,8 @@ export default function NotificationsPage() {
           {!loading && !errorMessage && allNotifications.length === 0 && <p className="p-8 text-center text-sm text-slate-500">Nenhuma notificação por enquanto.</p>}
           {!loading && !errorMessage && allNotifications.length > 0 && <div className="divide-y divide-slate-100">{allNotifications.map((notification) => {
             const StoredIcon = notificationIcon(notification.type);
-            const Icon = notification.kind === "event" ? Truck : notification.kind === "balance" ? CircleDollarSign : notification.kind === "stock" ? Package : notification.kind === "maintenance" ? Wrench : StoredIcon;
-            const background = notification.kind === "stock" || notification.kind === "maintenance" ? "bg-rose-50 text-rose-700" : notification.kind ? "bg-amber-50 text-amber-700" : notification.read_at ? "bg-slate-100 text-slate-500" : "bg-emerald-50 text-emerald-700";
+            const Icon = notification.kind === "event" || notification.kind === "logistics" ? Truck : notification.kind === "balance" ? CircleDollarSign : notification.kind === "stock" ? Package : notification.kind === "maintenance" ? Wrench : StoredIcon;
+            const background = notification.kind === "stock" || notification.kind === "maintenance" ? "bg-rose-50 text-rose-700" : notification.kind === "logistics" ? "bg-sky-50 text-sky-700" : notification.kind ? "bg-amber-50 text-amber-700" : notification.read_at ? "bg-slate-100 text-slate-500" : "bg-emerald-50 text-emerald-700";
             const content = <><span className={`mt-0.5 rounded-xl p-3 ${background}`}><Icon className="h-5 w-5" /></span><span className="min-w-0 flex-1"><span className="flex flex-wrap items-center gap-2"><strong className="text-slate-900">{notification.title}</strong>{notification.kind ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">Atenção</span> : !notification.read_at && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800">Novo</span>}</span><span className="mt-1 block text-sm leading-6 text-slate-500">{notification.message}</span>{!notification.kind && <span className="mt-2 block text-xs text-slate-400">{new Date(notification.created_at).toLocaleString("pt-BR")}</span>}</span></>;
             const className = `flex gap-4 px-5 py-5 transition ${notification.read_at ? "bg-white" : "bg-emerald-50/40 hover:bg-emerald-50"}`;
             return notification.href ? <Link key={`${notification.kind ?? "stored"}-${notification.id}`} href={notification.href} onClick={() => void markAsRead(notification)} className={className}>{content}</Link> : <button key={notification.id} type="button" onClick={() => void markAsRead(notification)} className={`${className} w-full text-left`}>{content}</button>;
