@@ -17,6 +17,7 @@ import {
   PackageOpen,
   ShieldAlert,
   Clock3,
+  CreditCard,
   UserRound,
 } from "lucide-react";
 
@@ -123,6 +124,8 @@ function statusDetails(status: CustomerProfile["approval_status"]) {
 
 function ReservationCard({ reservation, customerName }: { reservation: CustomerReservation; customerName: string }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
   const currentStatus = reservationStatus(reservation.status);
   const itemsTotal = reservationItemsTotal(reservation);
   const total = reservationTotal(reservation);
@@ -136,6 +139,28 @@ function ReservationCard({ reservation, customerName }: { reservation: CustomerR
     message: `Olá! Sou ${customerName} e gostaria de falar sobre a reserva #${reservation.id}, marcada para ${formattedDate}.${itemsSummary ? ` Itens: ${itemsSummary}.` : ""}`,
   });
   const calendarLink = googleCalendarLink(reservation, customerName);
+
+  async function startPayment() {
+    setPaying(true);
+    setPaymentError("");
+    try {
+      const response = await fetch("/api/payments/infinitepay/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reservationId: reservation.id }),
+      });
+      const data = await response.json().catch(() => null) as { checkoutUrl?: string; error?: string } | null;
+      if (!response.ok || !data?.checkoutUrl) {
+        setPaymentError(data?.error ?? "N\u00e3o foi poss\u00edvel iniciar o pagamento.");
+        return;
+      }
+      window.location.assign(data.checkoutUrl);
+    } catch {
+      setPaymentError("N\u00e3o foi poss\u00edvel conectar ao pagamento. Tente novamente.");
+    } finally {
+      setPaying(false);
+    }
+  }
 
   return (
     <article className="overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -220,6 +245,21 @@ function ReservationCard({ reservation, customerName }: { reservation: CustomerR
             <MessageCircle className="h-4 w-4" />
             Falar sobre esta reserva
           </a>
+
+          {reservation.status === "confirmed" && balance > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={startPayment}
+                disabled={paying}
+                className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <CreditCard className="h-4 w-4" />
+                {paying ? "Abrindo pagamento..." : `Pagar ${currency.format(balance)} via Pix ou cart\u00e3o`}
+              </button>
+              {paymentError && <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">{paymentError}</p>}
+            </>
+          )}
 
           {reservation.status === "confirmed" && (
             <a
