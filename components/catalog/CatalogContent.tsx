@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   ChevronDown,
   CalendarDays,
@@ -219,7 +219,6 @@ function formatEventDate(value: string) {
 }
 
 export function CatalogContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const searchFromUrl =
@@ -227,6 +226,11 @@ export function CatalogContent() {
 
   const categoryFromUrl =
     searchParams.get("categoria") ?? "todos";
+
+  const requestedEvent = searchParams.get("evento") ?? "todos";
+  const eventFromUrl = eventOptions.some((option) => option.value === requestedEvent)
+    ? requestedEvent
+    : "todos";
 
   const [products, setProducts] =
     useState<Product[]>([]);
@@ -252,7 +256,7 @@ export function CatalogContent() {
    * Filtros aplicados.
    */
   const [eventFilter, setEventFilter] =
-    useState("todos");
+    useState(eventFromUrl);
 
   const [priceFilter, setPriceFilter] =
     useState("todos");
@@ -264,7 +268,7 @@ export function CatalogContent() {
    * Filtros temporários do painel.
    */
   const [draftEvent, setDraftEvent] =
-    useState("todos");
+    useState(eventFromUrl);
 
   const [draftPrice, setDraftPrice] =
     useState("todos");
@@ -565,9 +569,17 @@ export function CatalogContent() {
     });
   }, [categoryFromUrl]);
 
+  useEffect(() => {
+    queueMicrotask(() => {
+      setEventFilter(eventFromUrl);
+      setDraftEvent(eventFromUrl);
+    });
+  }, [eventFromUrl]);
+
   function updateUrl(
     nextSearch: string,
-    nextCategory: string
+    nextCategory: string,
+    nextEvent: string = eventFilter
   ) {
     const params =
       new URLSearchParams();
@@ -589,16 +601,17 @@ export function CatalogContent() {
       );
     }
 
+    if (nextEvent !== "todos") params.set("evento", nextEvent);
+
     const query =
       params.toString();
 
-    router.replace(
+    window.history.replaceState(
+      null,
+      "",
       query
         ? `/catalogo?${query}`
-        : "/catalogo",
-      {
-        scroll: false,
-      }
+        : "/catalogo"
     );
   }
 
@@ -637,6 +650,8 @@ export function CatalogContent() {
     setPriceFilter(draftPrice);
     setSort(draftSort);
 
+    updateUrl(search, selectedCategory, draftEvent);
+
     setFiltersOpen(false);
   }
 
@@ -648,6 +663,8 @@ export function CatalogContent() {
     setEventFilter("todos");
     setPriceFilter("todos");
     setSort("relevantes");
+
+    updateUrl(search, selectedCategory, "todos");
 
     setFiltersOpen(false);
   }
@@ -664,11 +681,10 @@ export function CatalogContent() {
     setDraftPrice("todos");
     setDraftSort("relevantes");
 
-    router.replace(
-      "/catalogo",
-      {
-        scroll: false,
-      }
+    window.history.replaceState(
+      null,
+      "",
+      "/catalogo"
     );
   }
 
