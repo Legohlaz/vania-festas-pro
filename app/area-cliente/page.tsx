@@ -24,6 +24,10 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { translateAuthError } from "@/lib/supabase/error-messages";
 import { createWhatsAppLink } from "@/lib/whatsapp";
+import {
+  ContractAcceptance,
+  type ContractAcceptanceRecord,
+} from "@/components/customer/ContractAcceptance";
 
 type CustomerProfile = {
   id: number;
@@ -50,6 +54,7 @@ type CustomerReservation = {
   service_fee: number | null;
   amount_paid: number | null;
   reservation_items: ReservationItem[] | null;
+  reservation_contract_acceptances: ContractAcceptanceRecord[] | null;
 };
 
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -122,7 +127,7 @@ function statusDetails(status: CustomerProfile["approval_status"]) {
   };
 }
 
-function ReservationCard({ reservation, customerName }: { reservation: CustomerReservation; customerName: string }) {
+function ReservationCard({ reservation, customerId, customerName }: { reservation: CustomerReservation; customerId: number; customerName: string }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [paying, setPaying] = useState(false);
   const [paymentError, setPaymentError] = useState("");
@@ -236,6 +241,19 @@ function ReservationCard({ reservation, customerName }: { reservation: CustomerR
             <div className="flex justify-between gap-3"><dt className="text-slate-500">Saldo restante</dt><dd className={`font-bold ${balance > 0 ? "text-amber-700" : "text-emerald-700"}`}>{balance > 0 ? currency.format(balance) : "Quitado"}</dd></div>
           </dl>
 
+          {reservation.status === "confirmed" && (
+            <ContractAcceptance
+              reservationId={reservation.id}
+              customerId={customerId}
+              customerName={customerName}
+              eventDate={reservation.event_date}
+              eventAddress={reservation.event_address}
+              total={total}
+              itemsSummary={itemsSummary}
+              initialAcceptance={reservation.reservation_contract_acceptances?.[0] ?? null}
+            />
+          )}
+
           <a
             href={whatsappLink}
             target="_blank"
@@ -316,7 +334,7 @@ export default function AreaClientePage() {
       if (customer.approval_status === "approved") {
         const { data: reservationData, error: reservationsError } = await supabase
           .from("reservations")
-          .select("id,event_date,event_address,status,service_fee,amount_paid,reservation_items(quantity,unit_price,products(name))")
+          .select("id,event_date,event_address,status,service_fee,amount_paid,reservation_items(quantity,unit_price,products(name)),reservation_contract_acceptances(id,signer_name,signer_document,terms_version,accepted_at)")
           .eq("customer_id", customer.id)
           .order("event_date", { ascending: false });
 
@@ -471,7 +489,7 @@ export default function AreaClientePage() {
                 <div><h2 className="font-black text-slate-900">Minhas reservas</h2><p className="text-sm text-slate-500">Toque em uma reserva para ver os itens e os valores.</p></div>
               </div>
               <div className="mt-5 space-y-3">
-                {reservations.length === 0 ? <p className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">Você ainda não possui reservas vinculadas a este cadastro.</p> : reservations.map((reservation) => <ReservationCard key={reservation.id} reservation={reservation} customerName={profile.name} />)}
+                {reservations.length === 0 ? <p className="rounded-xl border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-500">Você ainda não possui reservas vinculadas a este cadastro.</p> : reservations.map((reservation) => <ReservationCard key={reservation.id} reservation={reservation} customerId={profile.id} customerName={profile.name} />)}
               </div>
             </section>
           )}

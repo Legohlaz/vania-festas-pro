@@ -29,5 +29,15 @@ export function translateAuthError(message?: string | null) {
     return "Informe um endereço de e-mail válido.";
   }
 
+  if (
+    normalized.includes("failed to fetch") ||
+    normalized.includes("fetch failed") ||
+    normalized.includes("network") ||
+    normalized.includes("service unavailable") ||
+    normalized.includes("temporarily unavailable")
+  ) {
+    return "O sistema de acesso está temporariamente indisponível. Aguarde alguns instantes e tente novamente.";
+  }
+
   return "Não foi possível concluir a operação. Confira os dados e tente novamente.";
 }

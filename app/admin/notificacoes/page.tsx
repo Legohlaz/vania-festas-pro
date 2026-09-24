@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, CheckCheck, CircleDollarSign, Clock3, Package, Truck, UserRoundPlus, Wrench } from "lucide-react";
+import { Bell, CheckCheck, CircleDollarSign, Clock3, FileSignature, Package, Truck, UserRoundPlus, Wrench } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type StoredNotification = {
   id: number;
-  type: "customer_pending" | "reservation_pending";
+  type: "customer_pending" | "reservation_pending" | "contract_accepted";
   title: string;
   message: string;
   href: string | null;
@@ -53,7 +53,9 @@ function reservationBalance(reservation: ReservationAlert) {
 }
 
 function notificationIcon(type: StoredNotification["type"]) {
-  return type === "customer_pending" ? UserRoundPlus : Clock3;
+  if (type === "customer_pending") return UserRoundPlus;
+  if (type === "contract_accepted") return FileSignature;
+  return Clock3;
 }
 
 export default function NotificationsPage() {

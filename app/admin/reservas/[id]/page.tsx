@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, CalendarDays, FileText, Package, Phone, Printer, Truck, UserRound } from "lucide-react";
+import { ArrowLeft, CalendarDays, CheckCircle2, FileText, Package, Phone, Printer, ShieldAlert, Truck, UserRound } from "lucide-react";
 
 import { DeleteReservationButton } from "@/components/admin/DeleteReservationButton";
 import { CopyReservationSummaryButton } from "@/components/admin/CopyReservationSummaryButton";
@@ -12,6 +12,7 @@ import { ReservationLogisticsChecklist } from "@/components/admin/ReservationLog
 import { ReservationPayments } from "@/components/admin/ReservationPayments";
 import { ReservationReturnCheck } from "@/components/admin/ReservationReturnCheck";
 import { ReservationQrScanner } from "@/components/admin/ReservationQrScanner";
+import { ReservationReminderLinks } from "@/components/admin/ReservationReminderLinks";
 import { createClient } from "@/lib/supabase/client";
 
 type Reservation = {
@@ -25,6 +26,13 @@ type Reservation = {
   service_fee: number | null;
   amount_paid: number | null;
   logistics_status: "scheduled" | "preparing" | "delivered" | "returned" | null;
+  reservation_contract_acceptances: {
+    id: number;
+    signer_name: string;
+    signer_document: string;
+    terms_version: string;
+    accepted_at: string;
+  }[] | null;
 };
 
 type ReservationItem = {
@@ -95,7 +103,7 @@ export default function ReservationDetailsPage() {
       const [reservationResult, itemsResult] = await Promise.all([
         supabase
           .from("reservations")
-          .select("id, customer_name, customer_phone, event_date, status, notes, event_address, service_fee, amount_paid, logistics_status")
+          .select("id, customer_name, customer_phone, event_date, status, notes, event_address, service_fee, amount_paid, logistics_status, reservation_contract_acceptances(id,signer_name,signer_document,terms_version,accepted_at)")
           .eq("id", reservationId)
           .single(),
         supabase
@@ -223,6 +231,31 @@ export default function ReservationDetailsPage() {
           </div>
 
           <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">
+            <section className={`rounded-2xl border p-5 shadow-sm ${reservation.reservation_contract_acceptances?.[0] ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
+              <div className="flex gap-3">
+                {reservation.reservation_contract_acceptances?.[0] ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" /> : <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />}
+                <div>
+                  <h2 className={`font-bold ${reservation.reservation_contract_acceptances?.[0] ? "text-emerald-950" : "text-amber-950"}`}>
+                    {reservation.reservation_contract_acceptances?.[0] ? "Contrato aceito" : "Contrato aguardando aceite"}
+                  </h2>
+                  {reservation.reservation_contract_acceptances?.[0] ? (
+                    <p className="mt-1 text-sm leading-6 text-emerald-800">{reservation.reservation_contract_acceptances[0].signer_name} aceitou em {new Date(reservation.reservation_contract_acceptances[0].accepted_at).toLocaleString("pt-BR")}.</p>
+                  ) : (
+                    <p className="mt-1 text-sm leading-6 text-amber-800">O cliente poderá aceitar o contrato pela Área do Cliente quando a reserva estiver confirmada.</p>
+                  )}
+                </div>
+              </div>
+            </section>
+            {reservation.status !== "cancelled" && (
+              <ReservationReminderLinks
+                reservationId={reservation.id}
+                customerName={reservation.customer_name}
+                customerPhone={reservation.customer_phone}
+                eventDate={reservation.event_date}
+                eventAddress={eventAddress}
+                balance={balance}
+              />
+            )}
             {reservation.status !== "cancelled" && (
               <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-center gap-3">

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import {
   ArrowLeft,
   Sparkles,
@@ -8,6 +9,12 @@ import {
 import { Header } from "@/components/layout/Header";
 import { Container } from "@/components/common/Container";
 import { CatalogContent } from "@/components/catalog/CatalogContent";
+
+export const metadata: Metadata = {
+  title: "Catálogo de produtos para festas",
+  description: "Encontre painéis, mesas, kits, balões e materiais para casamentos, aniversários e eventos especiais.",
+  alternates: { canonical: "/catalogo" },
+};
 
 export default function CatalogoPage() {
   return (
