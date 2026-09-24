@@ -33,9 +33,11 @@
 .photoNote p { font-family: Georgia, "Times New Roman", serif; font-size: 23px; font-style: italic; line-height: 1.25; animation: copyEnter 650ms ease both; }
 .photoNote > span { display: block; margin-top: 14px; font-size: 8px; font-weight: 500; letter-spacing: .15em; color: #e2e9e3; }
 .selector { padding: 0 48px 28px; }
-.selectorHeading { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 14px; }
+.selectorHeading { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; }
 .selectorHeading > span:first-child { font-size: 12px; font-weight: 600; color: #f4eee0; }
-.selectorHint { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; color: #b6c8bd; }
+.selectorHint { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; font-size: 10px; color: #b6c8bd; }
+.playback { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 0 10px; border: 1px solid #ffffff2b; border-radius: 999px; background: #052f2a85; color: #dce8df; font-size: 9px; font-weight: 700; transition: background 180ms, border-color 180ms; }
+.playback:hover { border-color: #f1d39180; background: #0c493f; }
 .choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid #ffffff38; }
 .choice { position: relative; display: flex; align-items: center; gap: 16px; min-width: 0; padding: 22px 18px 16px; border: 0; background: transparent; color: #d2dfd6; text-align: left; transition: background 200ms, color 200ms; }
 .choice + .choice { border-left: 1px solid #ffffff26; }
@@ -55,7 +57,7 @@
 .benefits svg { color: #69816b; stroke-width: 1.5; }
 .allEvents { display: inline-flex; align-items: center; gap: 10px; flex-shrink: 0; font-size: 11px; font-weight: 600; color: #235540; }
 .allEvents:hover { text-decoration: underline; text-underline-offset: 4px; }
-.banner a:focus-visible, .choice:focus-visible { outline: 2px solid #fff0cf; outline-offset: 5px; }
+.banner a:focus-visible, .choice:focus-visible, .playback:focus-visible { outline: 2px solid #fff0cf; outline-offset: 5px; }
 .choice:focus-visible { outline-offset: -5px; border-radius: 4px; }
 .allEvents:focus-visible { outline: 2px solid #235540; outline-offset: 5px; }
 @keyframes copyEnter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -93,6 +95,7 @@
   .selectorHeading { padding: 0 4px 15px; }
   .selectorHeading > span:first-child { font-size: 11px; }
   .selectorHint { display: none; }
+  .playback { margin-left: auto; }
   .choice { flex-direction: column; align-items: flex-start; gap: 9px; padding: 15px 9px 10px; }
   .choiceNumber { font-size: 9px; padding: 0; }
   .choiceText strong { font-size: 12px; }

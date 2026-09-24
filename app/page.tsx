@@ -3,6 +3,10 @@ import { Hero } from "@/components/home/Hero";
 import { SearchSection } from "@/components/home/SearchSection";
 import { Categories } from "@/components/home/Categories";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
+import { SocialProof } from "@/components/home/SocialProof";
+import { TrustIndicators } from "@/components/home/TrustIndicators";
+import { Container } from "@/components/common/Container";
+import { Footer } from "@/components/layout/Footer";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 export default function HomePage() {
@@ -28,9 +32,12 @@ export default function HomePage() {
       <main>
         <Hero />
         <SearchSection />
+        <Container><TrustIndicators /></Container>
         <Categories />
         <FeaturedProducts />
+        <SocialProof />
       </main>
+      <Footer />
     </>
   );
 }

@@ -9,6 +9,7 @@ import {
 import { Header } from "@/components/layout/Header";
 import { Container } from "@/components/common/Container";
 import { CatalogContent } from "@/components/catalog/CatalogContent";
+import { Footer } from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
   title: "Catálogo de produtos para festas",
@@ -82,6 +83,7 @@ export default function CatalogoPage() {
           <CatalogContent />
         </Suspense>
       </main>
+      <Footer />
     </>
   );
 }

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import { Container } from "@/components/common/Container";
 import { createClient } from "@/lib/supabase/client";
 import { createWhatsAppLink } from "@/lib/whatsapp";
@@ -720,6 +721,7 @@ export default function ProdutoDetalhesPage() {
           </div>
         </Container>
       </main>
+      <Footer />
     </>
   );
 }

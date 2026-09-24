@@ -88,7 +88,7 @@ export function FeaturedProducts() {
 
   return (
     <section
-      className="border-t border-gray-100 bg-gray-50"
+      className="reveal-section border-t border-gray-100 bg-gray-50"
       style={{ paddingTop: "96px", paddingBottom: "112px" }}
     >
       <Container>

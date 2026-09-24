@@ -30,7 +30,7 @@ const indicators = [
 
 export function TrustIndicators() {
   return (
-    <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <section className="reveal-section mt-10 grid gap-4 pb-8 sm:grid-cols-2 xl:grid-cols-4" aria-label="Diferenciais da Vânia Festas">
       {indicators.map(({ icon: Icon, title, description }) => (
         <div
           key={title}
@@ -77,6 +77,6 @@ export function TrustIndicators() {
           </div>
         </div>
       ))}
-    </div>
+    </section>
   );
 }

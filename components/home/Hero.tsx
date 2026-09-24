@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState, type KeyboardEvent } from "react";
-import { ArrowDown, ArrowRight, ArrowUpRight, Check, Heart, MessageCircle, Sparkles, Truck } from "lucide-react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { ArrowDown, ArrowRight, ArrowUpRight, Check, Heart, MessageCircle, Pause, Play, Sparkles, Truck } from "lucide-react";
 
 import { Container } from "@/components/common/Container";
 import weddingImage from "@/public/images/home/casamento.jpg";
@@ -52,8 +52,17 @@ const celebrations = [
 
 export function Hero() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const controls = useRef<Array<HTMLButtonElement | null>>([]);
   const celebration = celebrations[activeIndex];
+
+  useEffect(() => {
+    if (isPaused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % celebrations.length);
+    }, 6500);
+    return () => window.clearInterval(timer);
+  }, [isPaused]);
 
   function navigateCelebrations(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     let nextIndex: number;
@@ -71,7 +80,7 @@ export function Hero() {
   return (
     <section className={styles.section} aria-label="Inspiração para a sua festa">
       <Container className={styles.container}>
-        <div className={styles.banner}>
+        <div className={styles.banner} onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
           <div className={styles.photos}>
             {celebrations.map((item, index) => (
               <div key={item.id} className={styles.photo} data-active={index === activeIndex} aria-hidden={index !== activeIndex}>
@@ -128,6 +137,16 @@ export function Hero() {
             <div className={styles.selectorHeading}>
               <span>O que vamos celebrar?</span>
               <span className={styles.selectorHint}>Escolha seu momento <ArrowDown size={13} aria-hidden="true" /></span>
+              <button
+                type="button"
+                className={styles.playback}
+                aria-label={isPaused ? "Continuar troca automática" : "Pausar troca automática"}
+                aria-pressed={isPaused}
+                onClick={() => setIsPaused((current) => !current)}
+              >
+                {isPaused ? <Play size={13} aria-hidden="true" /> : <Pause size={13} aria-hidden="true" />}
+                {isPaused ? "Continuar" : "Pausar"}
+              </button>
             </div>
             <div className={styles.choices} role="group" aria-label="Escolha o tipo de evento">
               {celebrations.map((item, index) => (
@@ -138,7 +157,7 @@ export function Hero() {
                   className={styles.choice}
                   aria-pressed={index === activeIndex}
                   aria-controls="hero-scene"
-                  onClick={() => setActiveIndex(index)}
+                  onClick={() => { setActiveIndex(index); setIsPaused(true); }}
                   onKeyDown={(event) => navigateCelebrations(event, index)}
                 >
                   <span className={styles.choiceNumber}>0{index + 1}</span>

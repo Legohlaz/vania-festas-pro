@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import {
+  ArrowUpRight,
   Check,
   PackageCheck,
   Plus,
@@ -34,16 +35,16 @@ export function ProductCard({
   onAddToSelection,
 }: ProductCardProps) {
   return (
-    <div className="group flex h-full flex-col overflow-hidden rounded-[24px] border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+    <article className="group flex h-full flex-col overflow-hidden rounded-[26px] border border-emerald-950/10 bg-white shadow-[0_12px_35px_-26px_rgba(6,78,59,0.55)] transition-all duration-300 hover:-translate-y-1.5 hover:border-emerald-700/20 hover:shadow-[0_24px_48px_-25px_rgba(6,78,59,0.45)]">
       {/* Imagem */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+      <div className="relative aspect-[5/4] overflow-hidden bg-gradient-to-br from-emerald-50 to-stone-100">
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt={name}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-6xl">
@@ -66,6 +67,14 @@ export function ProductCard({
             Selecionado
           </div>
         )}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-emerald-950/45 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        <Link
+          href={`/catalogo/${slug}`}
+          aria-label={`Ver detalhes de ${name}`}
+          className="absolute bottom-4 right-4 inline-flex h-11 w-11 translate-y-3 items-center justify-center rounded-full bg-white text-emerald-900 opacity-0 shadow-lg transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 focus-visible:translate-y-0 focus-visible:opacity-100"
+        >
+          <ArrowUpRight size={19} />
+        </Link>
       </div>
 
       {/* Conteúdo */}
@@ -76,13 +85,13 @@ export function ProductCard({
         }}
       >
         {/* Categoria */}
-        <span className="w-fit rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
+        <span className="w-fit rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-emerald-800">
           {category}
         </span>
 
         {/* Nome */}
         <h3
-          className="text-xl font-black tracking-tight text-gray-900"
+          className="text-xl font-black tracking-tight text-emerald-950"
           style={{
             marginTop: "16px",
           }}
@@ -92,7 +101,7 @@ export function ProductCard({
 
         {/* Preço */}
         <p
-          className="text-lg font-bold text-emerald-900"
+          className="text-lg font-black text-emerald-800"
           style={{
             marginTop: "10px",
           }}
@@ -163,12 +172,12 @@ export function ProductCard({
           {/* Ver detalhes */}
           <Link
             href={`/catalogo/${slug}`}
-            className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-800 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-900"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-800 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-900"
           >
-            Ver detalhes
+            Ver detalhes <ArrowUpRight size={16} />
           </Link>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
