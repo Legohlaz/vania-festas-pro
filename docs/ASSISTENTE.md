@@ -1,12 +1,12 @@
-# Jarvis da Vânia Festas
+# Aurora da Vânia Festas
 
-Entrada: `/admin/assistente`, menu Jarvis e atalho flutuante na administração.
+Entrada: `/admin/assistente`, menu Aurora e atalho flutuante na administração.
 
 ## O que está implementado
 
 - Conversa por texto com OpenAI Responses e ferramentas limitadas ao administrador autenticado.
 - Ditado de mensagens em português quando o navegador oferece SpeechRecognition; texto disponível nos demais navegadores.
-- Leitura das respostas pela voz do navegador, ativada pelo usuário.
+- Leitura das respostas pela voz do navegador, ativada pelo usuário. Aurora prioriza vozes femininas conhecidas em português, com ritmo suave e tom levemente mais alegre. A Web Speech API não expõe gênero: o painel oferece seleção manual, prévia e preferência salva por navegador. A qualidade e as vozes disponíveis dependem do dispositivo.
 - Consulta de clientes, produtos, disponibilidade e eventos dos próximos sete dias.
 - Preparação de proposta de reserva com preços consultados no banco.
 - Revisão em cartão antes do salvamento. A proposta expira em 30 minutos.
@@ -31,7 +31,7 @@ O assistente não possui ferramenta de SQL arbitrário, edição de clientes, al
 
 ## Validação operacional
 
-1. Entrar como administrador e abrir Jarvis. Verificar agenda e tarefas.
+1. Entrar como administrador e abrir Aurora. Verificar agenda e tarefas.
 2. Criar tarefa com horário de Salvador, recarregar a página e confirmar persistência.
 3. Ativar avisos pelo sino e manter administração aberta para testar um vencimento.
 4. Após adicionar créditos à API, perguntar pelos eventos da semana e buscar produto por nome.

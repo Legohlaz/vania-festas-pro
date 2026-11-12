@@ -7,7 +7,7 @@ import { AdminNotifications } from "@/components/admin/AdminNotifications";
 
 const links = [
   { href: "/admin/dashboard", label: "Painel", icon: LayoutDashboard },
-  { href: "/admin/assistente", label: "Jarvis", icon: Sparkles },
+  { href: "/admin/assistente", label: "Aurora", icon: Sparkles },
   { href: "/admin/agenda", label: "Agenda", icon: CalendarRange },
   { href: "/admin/logistica", label: "Logística", icon: Truck },
   { href: "/admin/reservas", label: "Reservas", icon: CalendarDays },

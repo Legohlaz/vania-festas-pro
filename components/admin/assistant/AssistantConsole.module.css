@@ -289,6 +289,48 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.voiceControls {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+.voiceControls label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #66806b;
+}
+.voiceControls select {
+  width: 100%;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid #dce6d7;
+  border-radius: 11px;
+  background: #f8faf5;
+  color: #365945;
+  font-size: 12px;
+}
+.voiceControls button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px;
+  border-radius: 11px;
+  background: #eaf3e4;
+  color: #476d4e;
+  font-size: 12px;
+  font-weight: 700;
+}
+.voiceControls p {
+  font-size: 10px;
+  line-height: 1.7;
+  color: #82947b;
+  overflow-wrap: anywhere;
+}
+.voiceControls select:focus-visible {
+  outline: 2px solid #498967;
+  outline-offset: 3px;
+}
 .sidebar {
   display: grid;
   gap: 18px;

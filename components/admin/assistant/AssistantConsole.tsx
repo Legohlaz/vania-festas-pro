@@ -23,6 +23,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import type { DailyBrief, ReservationDraft } from "@/lib/assistant/schemas";
+import { useAuroraSpeech } from "./useAuroraSpeech";
 import styles from "./AssistantConsole.module.css";
 
 type Message = { role: "user" | "assistant"; content: string };
@@ -82,6 +83,14 @@ export function AssistantConsole() {
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [error, setError] = useState("");
+  const {
+    voices,
+    preferredVoice,
+    selectedVoice,
+    speechSupported,
+    chooseVoice,
+    speak,
+  } = useAuroraSpeech(setError);
   const [brief, setBrief] = useState<DailyBrief | null>(null);
   const [drafts, setDrafts] = useState<ReservationDraft[]>([]);
   const [voiceAvailable, setVoiceAvailable] = useState(false);
@@ -151,22 +160,6 @@ export function AssistantConsole() {
   useEffect(() => {
     end.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages, busy]);
-
-  function speak(text: string) {
-    if (!("speechSynthesis" in window)) {
-      setError("Seu navegador não oferece leitura por voz.");
-      return;
-    }
-    window.speechSynthesis.cancel();
-    const speech = new SpeechSynthesisUtterance(text.slice(0, 4000));
-    speech.lang = "pt-BR";
-    speech.rate = 1.04;
-    const voice = window.speechSynthesis
-      .getVoices()
-      .find((entry) => entry.lang.startsWith("pt-BR"));
-    if (voice) speech.voice = voice;
-    window.speechSynthesis.speak(speech);
-  }
 
   async function send(text: string) {
     if (busyRef.current || !text.trim()) return;
@@ -316,14 +309,14 @@ export function AssistantConsole() {
     <main className={styles.page}>
       <div className={styles.top}>
         <div>
-          <p className={styles.eyebrow}>SEU COPILOTO DE CELEBRAÇÕES</p>
+          <p className={styles.eyebrow}>SUA ASSISTENTE DE CELEBRAÇÕES</p>
           <h1>
             Menos trabalho.
             <br />
             <span>Mais tempo para criar.</span>
           </h1>
           <p className={styles.description}>
-            Converse com o Jarvis para organizar o dia e preparar suas reservas.
+            Converse com a Aurora para organizar o dia e preparar suas reservas.
           </p>
         </div>
         <div className={styles.orb} aria-hidden="true">
@@ -331,14 +324,14 @@ export function AssistantConsole() {
         </div>
       </div>
       <div className={styles.layout}>
-        <section className={styles.console} aria-label="Conversa com Jarvis">
+        <section className={styles.console} aria-label="Conversa com Aurora">
           <div className={styles.consoleHeader}>
             <div className={styles.identity}>
               <span className={styles.avatar}>
                 <Sparkles size={21} />
               </span>
               <div>
-                <strong>Jarvis</strong>
+                <strong>Aurora</strong>
                 <span>
                   {busy
                     ? "Consultando o sistema…"
@@ -369,7 +362,7 @@ export function AssistantConsole() {
                 <span className={styles.welcomeIcon}>
                   <Sparkles size={27} />
                 </span>
-                <h2>Olá! O que vamos organizar?</h2>
+                <h2>Olá, eu sou a Aurora!</h2>
                 <p>
                   Posso consultar seus produtos, preparar uma reserva ou ajudar
                   com as tarefas do dia.
@@ -398,7 +391,7 @@ export function AssistantConsole() {
                     : styles.assistantMessage
                 }
               >
-                <span>{message.role === "user" ? "Você" : "Jarvis"}</span>
+                <span>{message.role === "user" ? "Você" : "Aurora"}</span>
                 <p>{message.content}</p>
                 {message.role === "assistant" && (
                   <button
@@ -438,7 +431,7 @@ export function AssistantConsole() {
             }}
           >
             <label className="sr-only" htmlFor="assistant-input">
-              Seu pedido para o Jarvis
+              Seu pedido para a Aurora
             </label>
             <textarea
               id="assistant-input"
@@ -513,6 +506,54 @@ export function AssistantConsole() {
           </div>
         </section>
         <aside className={styles.sidebar}>
+          <section
+            className={styles.sideCard}
+            aria-label="Configurações de voz da Aurora"
+          >
+            <h2>Voz da Aurora</h2>
+            <p className={styles.empty}>
+              Uma fala acolhedora, alegre e suave para acompanhar seu dia.
+            </p>
+            <div className={styles.voiceControls}>
+              <label htmlFor="aurora-voice">Voz em português</label>
+              <select
+                id="aurora-voice"
+                disabled={!speechSupported || voices.length === 0}
+                value={
+                  voices.some((voice) => voice.voiceURI === preferredVoice)
+                    ? preferredVoice
+                    : ""
+                }
+                onChange={(event) => chooseVoice(event.target.value)}
+              >
+                <option value="">Automática · priorizar feminina</option>
+                {voices.map((voice) => (
+                  <option
+                    key={`${voice.voiceURI}-${voice.lang}`}
+                    value={voice.voiceURI}
+                  >
+                    {voice.name} · {voice.lang}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                disabled={!selectedVoice}
+                onClick={() =>
+                  speak(
+                    "Olá, eu sou a Aurora! Vamos organizar seu dia com leveza? Estou aqui para ajudar com suas reservas e lembretes.",
+                  )
+                }
+              >
+                <Volume2 size={15} /> Experimentar a voz
+              </button>
+              <p>
+                {selectedVoice
+                  ? `Em uso: ${selectedVoice.name}. Sua escolha fica salva neste navegador.`
+                  : "As vozes disponíveis dependem do seu navegador e dispositivo."}
+              </p>
+            </div>
+          </section>
           <section className={styles.dayCard}>
             <div className={styles.cardHeading}>
               <span>

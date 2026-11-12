@@ -49,7 +49,7 @@ export function AssistantReminders() {
             Notification.permission === "granted"
           ) {
             try {
-              new Notification("Jarvis · Lembrete", {
+              new Notification("Aurora · Lembrete", {
                 body: task.title,
                 tag: task.id,
               });
@@ -84,7 +84,7 @@ export function AssistantReminders() {
         >
           <div>
             <p className="text-xs font-black text-emerald-800">
-              Jarvis está lembrando você
+              Aurora está lembrando você
             </p>
             <p className="mt-2 text-sm text-slate-600">{notice}</p>
           </div>
@@ -101,7 +101,7 @@ export function AssistantReminders() {
         href="/admin/assistente"
         className="inline-flex items-center gap-2 rounded-full border border-emerald-700/10 bg-emerald-900 px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-emerald-800"
       >
-        <Sparkles size={17} /> Jarvis
+        <Sparkles size={17} /> Aurora
       </Link>
     </div>
   );
