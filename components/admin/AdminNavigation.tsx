@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, CalendarDays, CalendarRange, LayoutDashboard, Package, PartyPopper, Truck, Users, WalletCards } from "lucide-react";
+import { BarChart3, CalendarDays, CalendarRange, LayoutDashboard, Package, PartyPopper, Sparkles, Truck, Users, WalletCards } from "lucide-react";
 import { AdminNotifications } from "@/components/admin/AdminNotifications";
 
 const links = [
   { href: "/admin/dashboard", label: "Painel", icon: LayoutDashboard },
+  { href: "/admin/assistente", label: "Jarvis", icon: Sparkles },
   { href: "/admin/agenda", label: "Agenda", icon: CalendarRange },
   { href: "/admin/logistica", label: "Logística", icon: Truck },
   { href: "/admin/reservas", label: "Reservas", icon: CalendarDays },
